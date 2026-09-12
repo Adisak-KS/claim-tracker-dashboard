@@ -17,7 +17,10 @@ export async function GET(request: Request) {
   const type = searchParams.get("type");
   const status = searchParams.get("status");
   const sort = (searchParams.get("sort") ?? "urgency") as SortKey;
+  const direction = searchParams.get("direction") === "asc" ? 1 : -1;
   const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+  /** export ต้องได้ทุกแถวที่กรองไว้ ไม่ใช่แค่หน้าที่เห็น ตัวเลขถึงจะตรงกัน */
+  const exportAll = searchParams.get("all") === "1";
   const pageSize = Math.min(100, Number(searchParams.get("pageSize") ?? 25));
 
   let rows = getProviderSummaries();
@@ -49,16 +52,16 @@ export async function GET(request: Request) {
     rows = rows.filter((r) => r.failedCount === 0 && !r.isSilent);
   }
 
+  /** เรียงทั้งชุดก่อนตัดหน้า ไม่งั้นจะเรียงแค่แถวที่เห็นซึ่งได้ผลผิด */
   const sorted = [...rows].sort((a, b) => {
-    if (sort === "name") return a.name.localeCompare(b.name, "th");
-    if (sort === "successRate") return a.successRate - b.successRate;
-    if (sort === "urgency") return urgencyScore(b) - urgencyScore(a);
-    return b[sort] - a[sort];
+    if (sort === "urgency") return (urgencyScore(b) - urgencyScore(a)) * -direction;
+    if (sort === "name") return a.name.localeCompare(b.name, "th") * -direction;
+    return (a[sort] - b[sort]) * direction;
   });
 
   const start = (page - 1) * pageSize;
   const body: Paginated<ProviderSummary> = {
-    rows: sorted.slice(start, start + pageSize),
+    rows: exportAll ? sorted : sorted.slice(start, start + pageSize),
     total: sorted.length,
     page,
     pageSize,

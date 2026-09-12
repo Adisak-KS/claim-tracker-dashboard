@@ -13,6 +13,12 @@ import {
   type FilterOption,
 } from "@/components/ui/filter-bar";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import {
+  Column,
+  DataTable,
+  DataTableHead,
+  type SortState,
+} from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/shared/states";
 import { useStoredState } from "@/lib/use-stored-state";
@@ -51,6 +57,10 @@ export function SubmissionsView() {
   const [debouncedQ, setDebouncedQ] = useState("");
   const [outcome, setOutcome] = useState("all");
   const [system, setSystem] = useState("all");
+  const [sort, setSort] = useState<SortState>({
+    key: "submittedAt",
+    direction: "desc",
+  });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useStoredState(
     "submissions.pageSize",
@@ -73,8 +83,26 @@ export function SubmissionsView() {
     };
   }
 
+  /** กดหัวเดิมซ้ำ = สลับทิศ กดหัวใหม่ = เริ่มจากมากไปน้อย */
+  function toggleSort(key: string) {
+    setSort((current) =>
+      current.key === key
+        ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
+        : { key, direction: "desc" },
+    );
+    setPage(1);
+  }
+
   const { data, isPending, isFetching, isError, error, refetch } =
-    useSubmissions({ q: debouncedQ, outcome, system, page, pageSize });
+    useSubmissions({
+      q: debouncedQ,
+      outcome,
+      system,
+      sort: sort.key,
+      direction: sort.direction,
+      page,
+      pageSize,
+    });
 
   const activeCount = useMemo(
     () =>
@@ -147,25 +175,28 @@ export function SubmissionsView() {
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[58rem] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                  <th className="px-4 py-2.5 font-medium">รอบการส่ง</th>
-                  <th className="px-4 py-2.5 font-medium">หน่วยบริการ</th>
-                  <th className="px-4 py-2.5 font-medium">ระบบ</th>
-                  <th className="px-4 py-2.5 text-right font-medium">ทั้งหมด</th>
-                  <th className="px-4 py-2.5 text-right font-medium">สำเร็จ</th>
-                  <th className="px-4 py-2.5 text-right font-medium">
-                    ไม่สำเร็จ
-                  </th>
-                  <th className="px-4 py-2.5 text-center font-medium">
-                    ผลลัพธ์
-                  </th>
-                  <th className="px-4 py-2.5 font-medium">ปัญหาหลัก</th>
-                  <th className="px-4 py-2.5 font-medium">เวลาที่ส่ง</th>
-                </tr>
-              </thead>
+          <DataTable columns={9}>
+              <DataTableHead>
+                <Column>รอบการส่ง</Column>
+                <Column sortKey="providerName" sort={sort} onSort={toggleSort}>
+                  หน่วยบริการ
+                </Column>
+                <Column>ระบบ</Column>
+                <Column align="right" sortKey="total" sort={sort} onSort={toggleSort}>
+                  ทั้งหมด
+                </Column>
+                <Column align="right" sortKey="success" sort={sort} onSort={toggleSort}>
+                  สำเร็จ
+                </Column>
+                <Column align="right" sortKey="failed" sort={sort} onSort={toggleSort}>
+                  ไม่สำเร็จ
+                </Column>
+                <Column align="center">ผลลัพธ์</Column>
+                <Column>ปัญหาหลัก</Column>
+                <Column sortKey="submittedAt" sort={sort} onSort={toggleSort}>
+                  เวลาที่ส่ง
+                </Column>
+              </DataTableHead>
               <tbody className="transition-opacity">
                 {rows.map((row) => (
                   <tr
@@ -215,8 +246,7 @@ export function SubmissionsView() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+          </DataTable>
         )}
 
         {data && data.total > 0 && (

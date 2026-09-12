@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Building2, SearchX } from "lucide-react";
+import { Building2, FileSpreadsheet, SearchX } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import {
@@ -17,6 +17,12 @@ import {
   type FilterOption,
 } from "@/components/ui/filter-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  Column,
+  DataTable,
+  DataTableHead,
+  type SortState,
+} from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/shared/states";
 import { useStoredState } from "@/lib/use-stored-state";
@@ -24,15 +30,13 @@ import { PROVIDER_TYPES, PROVIDER_TYPE_INFO } from "@/lib/domain/provider";
 import type { ProviderSummary } from "@/lib/domain/summary";
 import "@/lib/schemes";
 import { getIssueLabel, getDefaultScheme } from "@/lib/domain/scheme";
+import { Button } from "@/components/ui/button";
+import { apiGet } from "@/lib/api/client";
+import { exportToExcel } from "@/lib/export-excel";
+import { rateTone } from "@/lib/domain/rate-tone";
+import type { Paginated } from "@/lib/domain/summary";
 import { useProviders } from "../hooks/use-providers";
 import { formatNumber, formatPercent, formatRelativeTH } from "@/lib/utils";
-
-/** ต่ำกว่า 80 คือต้องเข้าไปช่วยจริง ระหว่าง 80 ถึง 95 คือเฝ้าระวัง */
-function rateTone(rate: number) {
-  if (rate >= 95) return "success" as const;
-  if (rate >= 80) return "warning" as const;
-  return "danger" as const;
-}
 
 const ZONE_OPTIONS: FilterOption[] = [
   { value: "all", label: "ทุกเขต" },
@@ -65,14 +69,6 @@ const STATUS_OPTIONS: FilterOption[] = [
   { value: "healthy", label: "ปกติ" },
 ];
 
-const SORT_OPTIONS: FilterOption[] = [
-  { value: "urgency", label: "ความเร่งด่วน" },
-  { value: "failedCount", label: "ไม่สำเร็จมากสุด" },
-  { value: "totalSent", label: "ส่งมากสุด" },
-  { value: "successRate", label: "อัตราสำเร็จต่ำสุด" },
-  { value: "name", label: "ชื่อ ก-ฮ" },
-];
-
 export function ProvidersView() {
   const params = useSearchParams();
   const schemeId = getDefaultScheme().id;
@@ -83,7 +79,10 @@ export function ProvidersView() {
   const [system, setSystem] = useState("all");
   const [type, setType] = useState("all");
   const [status, setStatus] = useState(params.get("status") ?? "all");
-  const [sort, setSort] = useState("urgency");
+  const [sort, setSort] = useState<SortState>({
+    key: "urgency",
+    direction: "desc",
+  });
   const [page, setPage] = useState(1);
 
   /**
@@ -110,9 +109,27 @@ export function ProvidersView() {
     return () => clearTimeout(timer);
   }, [q]);
 
-  const { data, isPending, isFetching, isError, error, refetch } = useProviders(
-    { q: debouncedQ, zone, system, type, status, sort, page, pageSize },
-  );
+  /** กดหัวเดิมซ้ำ = สลับทิศ กดหัวใหม่ = เริ่มจากมากไปน้อย ซึ่งคนคาดหวังกับตัวเลข */
+  function toggleSort(key: string) {
+    setSort((current) =>
+      current.key === key
+        ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
+        : { key, direction: "desc" },
+    );
+    setPage(1);
+  }
+
+  const { data, isPending, isFetching, isError, error, refetch } = useProviders({
+    q: debouncedQ,
+    zone,
+    system,
+    type,
+    status,
+    sort: sort.key,
+    direction: sort.direction,
+    page,
+    pageSize,
+  });
 
   const activeCount = useMemo(
     () =>
@@ -132,12 +149,78 @@ export function ProvidersView() {
 
   const rows = data?.rows ?? [];
 
+  /** ดึงทุกแถวที่กรองไว้ก่อน export ไม่ใช่เอาเฉพาะหน้าที่เห็น */
+  async function handleExport() {
+    const all = await apiGet<Paginated<ProviderSummary>>("/api/providers", {
+      q: debouncedQ,
+      zone,
+      system,
+      type,
+      status,
+      sort: sort.key,
+      direction: sort.direction,
+      all: "1",
+    });
+
+    await exportToExcel({
+      title: "หน่วยบริการ",
+      subtitle: `ข้อมูล ณ ${new Date().toLocaleString("th-TH")} · ${all.total} รายการ${
+        activeCount > 0 ? " (กรองแล้ว)" : ""
+      }`,
+      rows: all.rows,
+      columns: [
+        { header: "รหัส 9 หลักใหม่", width: 14, value: (r) => r.newCode },
+        { header: "รหัส 5 หลัก", width: 12, value: (r) => r.shortCode ?? "" },
+        { header: "ชื่อหน่วยบริการ", width: 42, value: (r) => r.name },
+        {
+          header: "ประเภท",
+          width: 22,
+          value: (r) => PROVIDER_TYPE_INFO[r.type].label,
+        },
+        { header: "จังหวัด", width: 16, value: (r) => r.province },
+        { header: "เขตสุขภาพ", width: 10, format: "number", value: (r) => r.healthZone },
+        { header: "ระบบต้นทาง", width: 12, value: (r) => r.sourceSystem },
+        { header: "ส่งทั้งหมด", width: 12, format: "number", value: (r) => r.totalSent },
+        { header: "สำเร็จ", width: 12, format: "number", value: (r) => r.successCount },
+        { header: "ไม่สำเร็จ", width: 12, format: "number", value: (r) => r.failedCount },
+        {
+          header: "อัตราสำเร็จ (%)",
+          width: 14,
+          format: "percent",
+          value: (r) => r.successRate,
+        },
+        {
+          header: "ปัญหาหลัก",
+          width: 30,
+          value: (r) => getIssueLabel(schemeId, r.topIssueCode),
+        },
+        {
+          header: "ส่งล่าสุด",
+          width: 18,
+          format: "datetime",
+          value: (r) => (r.lastSentAt ? new Date(r.lastSentAt) : null),
+        },
+      ],
+    });
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader
         icon={Building2}
         title="หน่วยบริการ"
         description="ค้นหาและติดตามสถานะการส่งเคลมรายหน่วยบริการ"
+        action={
+          <Button
+            variant="secondary"
+            icon={FileSpreadsheet}
+            onClick={handleExport}
+            loadingText="กำลังสร้างไฟล์"
+            disabled={isPending || rows.length === 0}
+          >
+            ดาวน์โหลด Excel
+          </Button>
+        }
       />
 
       <Card className="animate-rise overflow-hidden">
@@ -153,7 +236,6 @@ export function ProvidersView() {
           <SelectFilter label="ประเภท" value={type} options={TYPE_OPTIONS} onChange={changeFilter(setType)} />
           <SelectFilter label="ระบบต้นทาง" value={system} options={SYSTEM_OPTIONS} onChange={changeFilter(setSystem)} />
           <SelectFilter label="สถานะ" value={status} options={STATUS_OPTIONS} onChange={changeFilter(setStatus)} />
-          <SelectFilter label="เรียงตาม" value={sort} options={SORT_OPTIONS} onChange={changeFilter(setSort)} />
         </FilterBar>
 
         {isError ? (
@@ -177,20 +259,25 @@ export function ProvidersView() {
             action={activeCount > 0 ? { label: "ล้างตัวกรอง", onClick: resetFilters } : undefined}
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[60rem] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                  <th className="px-4 py-2.5 font-medium">หน่วยบริการ</th>
-                  <th className="px-4 py-2.5 font-medium">ประเภท</th>
-                  <th className="px-4 py-2.5 font-medium">ระบบ</th>
-                  <th className="px-4 py-2.5 text-right font-medium">ส่งทั้งหมด</th>
-                  <th className="px-4 py-2.5 text-right font-medium">ไม่สำเร็จ</th>
-                  <th className="px-4 py-2.5 text-center font-medium">อัตราสำเร็จ</th>
-                  <th className="px-4 py-2.5 font-medium">ปัญหาหลัก</th>
-                  <th className="px-4 py-2.5 font-medium">ส่งล่าสุด</th>
-                </tr>
-              </thead>
+          <DataTable columns={8}>
+              <DataTableHead>
+                <Column sortKey="name" sort={sort} onSort={toggleSort}>
+                  หน่วยบริการ
+                </Column>
+                <Column>ประเภท</Column>
+                <Column>ระบบ</Column>
+                <Column align="right" sortKey="totalSent" sort={sort} onSort={toggleSort}>
+                  ส่งทั้งหมด
+                </Column>
+                <Column align="right" sortKey="failedCount" sort={sort} onSort={toggleSort}>
+                  ไม่สำเร็จ
+                </Column>
+                <Column align="center" sortKey="successRate" sort={sort} onSort={toggleSort}>
+                  อัตราสำเร็จ
+                </Column>
+                <Column>ปัญหาหลัก</Column>
+                <Column>ส่งล่าสุด</Column>
+              </DataTableHead>
               <tbody
                 className={isFetching ? "opacity-60 transition-opacity" : "transition-opacity"}
               >
@@ -235,8 +322,7 @@ export function ProvidersView() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+          </DataTable>
         )}
 
         {data && data.total > 0 && (

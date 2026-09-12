@@ -9,6 +9,8 @@ export interface SubmissionFilters {
   q: string;
   outcome: string;
   system: string;
+  sort: string;
+  direction: string;
   page: number;
   pageSize: number;
 }

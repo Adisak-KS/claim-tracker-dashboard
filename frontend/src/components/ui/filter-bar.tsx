@@ -1,13 +1,10 @@
 "use client";
 
 import { Search, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Select, type SelectOption } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-export interface FilterOption {
-  value: string;
-  label: string;
-}
+export type FilterOption = SelectOption;
 
 interface SelectFilterProps {
   label: string;
@@ -23,20 +20,16 @@ export function SelectFilter({
   onChange,
 }: SelectFilterProps) {
   return (
-    <label className="flex min-w-0 flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      <select
+      <Select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-9 cursor-pointer truncate rounded-[var(--radius)] border border-border-strong bg-surface px-2.5 text-sm text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+        options={options}
+        onChange={onChange}
+        ariaLabel={label}
+        className="min-w-32"
+      />
+    </div>
   );
 }
 
@@ -87,9 +80,15 @@ export function FilterBar({ children, activeCount, onReset }: FilterBarProps) {
     <div className="flex flex-wrap items-end gap-3 border-b border-border px-4 py-3">
       {children}
       {activeCount > 0 && (
-        <Button variant="ghost" size="sm" icon={X} onClick={onReset}>
-          ล้างตัวกรอง {activeCount} รายการ
-        </Button>
+        <button
+          type="button"
+          onClick={onReset}
+          title={`ล้างตัวกรอง ${activeCount} รายการ`}
+          aria-label={`ล้างตัวกรอง ${activeCount} รายการ`}
+          className="mb-0.5 grid size-9 cursor-pointer place-items-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          <X className="size-4" aria-hidden />
+        </button>
       )}
     </div>
   );

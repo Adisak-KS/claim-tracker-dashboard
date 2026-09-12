@@ -11,6 +11,7 @@ export interface ProviderFilters {
   type: string;
   status: string;
   sort: string;
+  direction: string;
   page: number;
   pageSize: number;
 }
