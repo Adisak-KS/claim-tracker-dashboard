@@ -1,13 +1,14 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ChevronDown, SearchX } from "lucide-react";
+import { SearchX } from "lucide-react";
 import { apiGet } from "@/lib/api/client";
+import { AuthorityMessageInline } from "@/components/ui/authority-message";
 import {
-  AuthorityMessage,
-  AuthorityMessageInline,
-} from "@/components/ui/authority-message";
+  ClaimRecordDialog,
+  type ClaimRecordDetail,
+} from "./claim-record-dialog";
 import {
   Column,
   DataTable,
@@ -21,11 +22,7 @@ import { TableSkeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/shared/states";
 import { useStoredState } from "@/lib/use-stored-state";
 import { getStatusLabel, type SchemeId } from "@/lib/domain/scheme";
-import {
-  CLAIM_OUTCOME_LABEL,
-  type ClaimRecord,
-  type ClaimOutcome,
-} from "@/lib/domain/claim";
+import { CLAIM_OUTCOME_LABEL, type ClaimOutcome } from "@/lib/domain/claim";
 import type { Paginated } from "@/lib/domain/summary";
 import { cn, formatDateTimeTH, formatNumber } from "@/lib/utils";
 
@@ -42,11 +39,6 @@ const FILTERS = [
   { value: "pending", label: "รอผล" },
   { value: "all", label: "ทั้งหมด" },
 ];
-
-interface ProviderClaimRecord extends ClaimRecord {
-  batchId: string;
-  submittedAt: string;
-}
 
 /**
  * รายการเคลมระดับ VN ของหน่วยบริการหนึ่ง
@@ -65,7 +57,7 @@ export function ClaimRecordsTable({
   const [outcome, setOutcome] = useState("failed");
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [openRecord, setOpenRecord] = useState<ClaimRecordDetail | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useStoredState(
     "claimRecords.pageSize",
@@ -83,7 +75,7 @@ export function ClaimRecordsTable({
   const { data, isPending, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["provider-records", code, outcome, debouncedQ, page, pageSize],
     queryFn: () =>
-      apiGet<Paginated<ProviderClaimRecord>>(
+      apiGet<Paginated<ClaimRecordDetail>>(
         `/api/providers/${code}/records`,
         { outcome, q: debouncedQ, page, pageSize },
       ),
@@ -166,20 +158,18 @@ export function ClaimRecordsTable({
               <Column>ข้อความที่ตอบกลับ</Column>
             </DataTableHead>
             <tbody>
-              {data.rows.map((record) => {
-                const rowKey = `${record.batchId}-${record.seq}`;
-                const isOpen = expanded === rowKey;
-                const hasDetail = Boolean(record.responses?.length);
-
-                return (
-                  <Fragment key={rowKey}>
-                <DataTableRow>
+              {data.rows.map((record) => (
+                <DataTableRow
+                  key={`${record.batchId}-${record.seq}`}
+                  className="cursor-pointer"
+                  onClick={() => setOpenRecord(record)}
+                >
                   <td className="px-4 py-2.5">
                     <span className="block font-mono text-sm text-foreground">
                       {record.vn}
                     </span>
                     <span className="block font-mono text-xs text-muted-foreground">
-                      {record.batchId} · ลำดับ {record.seq}
+                      {record.batchId}
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground">
@@ -192,29 +182,15 @@ export function ClaimRecordsTable({
                     />
                   </td>
                   <td className="max-w-md px-4 py-2.5 whitespace-normal">
-                    {hasDetail ? (
-                      <button
-                        type="button"
-                        onClick={() => setExpanded(isOpen ? null : rowKey)}
-                        aria-expanded={isOpen}
-                        className="flex w-full cursor-pointer items-start gap-2 text-left"
-                      >
-                        <span className="min-w-0 flex-1 space-y-1.5">
-                          {record.responses?.map((response) => (
-                            <AuthorityMessageInline
-                              key={response.code}
-                              response={response}
-                            />
-                          ))}
-                        </span>
-                        <ChevronDown
-                          className={cn(
-                            "mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform duration-200",
-                            isOpen && "rotate-180",
-                          )}
-                          aria-hidden
-                        />
-                      </button>
+                    {record.responses?.length ? (
+                      <span className="block space-y-1.5">
+                        {record.responses.map((response) => (
+                          <AuthorityMessageInline
+                            key={response.code}
+                            response={response}
+                          />
+                        ))}
+                      </span>
                     ) : (
                       <span className="text-sm text-muted-foreground">
                         {getStatusLabel(schemeId, record.statusCode)}
@@ -222,24 +198,7 @@ export function ClaimRecordsTable({
                     )}
                   </td>
                 </DataTableRow>
-
-                {isOpen && (
-                  <tr className="animate-fade">
-                    <td colSpan={4} className="bg-surface-muted/40 px-4 py-3">
-                      <div className="space-y-2">
-                        {record.responses?.map((response) => (
-                          <AuthorityMessage
-                            key={response.code}
-                            response={response}
-                          />
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-                  </Fragment>
-                );
-              })}
+              ))}
             </tbody>
           </DataTable>
 
@@ -255,6 +214,14 @@ export function ClaimRecordsTable({
             busy={isFetching}
           />
         </>
+      )}
+
+      {openRecord && (
+        <ClaimRecordDialog
+          record={openRecord}
+          schemeId={schemeId}
+          onClose={() => setOpenRecord(null)}
+        />
       )}
     </div>
   );

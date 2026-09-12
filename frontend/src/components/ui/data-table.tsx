@@ -234,12 +234,15 @@ export function NameLine({
 export function DataTableRow({
   children,
   className,
+  onClick,
 }: {
   children: ReactNode;
   className?: string;
+  onClick?: () => void;
 }) {
   return (
     <tr
+      onClick={onClick}
       className={cn(
         // hover ใช้สีจาง ๆ ของ primary ไม่ใช่ surface-muted เพราะสีนั้นเป็นของหัวตารางแล้ว
         "transition-colors hover:bg-primary/5 [&>td]:whitespace-nowrap [&>td]:border-b [&>td]:border-border last:[&>td]:border-0",
