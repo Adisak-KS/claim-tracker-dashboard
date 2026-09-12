@@ -587,6 +587,9 @@ let batchCache: SubmissionBatch[] | null = null;
 
 const BATCH_HISTORY_DAYS = 14;
 
+/** ข้อจำกัดของ API สปสช. ส่งได้ครั้งละไม่เกิน 10 รายการ */
+const CHUNK_SIZE = 10;
+
 export function getSubmissionBatches(): SubmissionBatch[] {
   if (batchCache) return batchCache;
 
@@ -595,7 +598,12 @@ export function getSubmissionBatches(): SubmissionBatch[] {
   const rows: SubmissionBatch[] = [];
 
   for (const p of getProviderSummaries()) {
-    const batchCount = 1 + Math.floor(rng() * 4);
+    /**
+     * สปสช. จำกัดให้ส่งได้ครั้งละไม่เกิน 10 รายการ (chunk limit ของ API)
+     * จำนวนรอบจึงคิดจากปริมาณจริง ไม่ใช่สุ่มเอา
+     * ที่มา: docs/Performance-Analysis.md "เท่าลิมิต API ที่ chunk อยู่แล้ว"
+     */
+    const batchCount = Math.max(1, Math.ceil(p.totalSent / CHUNK_SIZE));
 
     /**
      * 🔴 ยอดรวมทุก batch ต้องเท่ากับยอดของหน่วยบริการเป๊ะ

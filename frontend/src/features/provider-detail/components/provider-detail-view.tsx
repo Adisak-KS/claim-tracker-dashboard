@@ -1,44 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Building2, ListTree, MessageSquareWarning } from "lucide-react";
+import { ArrowLeft, Building2 } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState, ErrorState } from "@/components/shared/states";
-import {
-  Column,
-  DataTable,
-  DataTableHead,
-  DataTableRow,
-} from "@/components/ui/data-table";
 import { getDefaultScheme } from "@/lib/domain/scheme";
-import { BatchRecordsDialog } from "./batch-records-dialog";
+import { ClaimRecordsTable } from "./claim-records-table";
 import "@/lib/schemes";
 import { PROVIDER_TYPE_INFO } from "@/lib/domain/provider";
-import { CLAIM_OUTCOME_LABEL, type ClaimOutcome } from "@/lib/domain/claim";
 import { rateTone } from "@/lib/domain/rate-tone";
 import { ApiError } from "@/lib/api/client";
-import {
-  formatDateTimeTH,
-  formatNumber,
-  formatPercent,
-  formatRelativeTH,
-} from "@/lib/utils";
+import { formatNumber, formatPercent, formatRelativeTH } from "@/lib/utils";
 import { useProviderDetail } from "../hooks/use-provider-detail";
-
-const OUTCOME_TONE: Record<ClaimOutcome, StatusTone> = {
-  success: "success",
-  failed: "danger",
-  pending: "warning",
-  cancelled: "neutral",
-};
 
 export function ProviderDetailView({ code }: { code: string }) {
   const { data, isPending, isError, error, refetch } = useProviderDetail(code);
-  const [openBatch, setOpenBatch] = useState<string | null>(null);
-  const schemeId = getDefaultScheme().id;
+  const scheme = getDefaultScheme();
 
   if (isPending) return <ProviderDetailSkeleton />;
 
@@ -120,72 +99,11 @@ export function ProviderDetailView({ code }: { code: string }) {
 
       <Card className="animate-rise overflow-hidden">
         <CardHeader
-          title="รอบการส่งล่าสุด"
-          description={`${formatNumber(batches.length)} รอบ · กดที่รหัสรอบเพื่อดูรายการรายตัวและข้อความที่ตอบกลับ · ส่งครั้งล่าสุด ${formatRelativeTH(provider.lastSentAt)}`}
+          title="รายการเคลม"
+          description={`ส่งเป็นชุดครั้งละไม่เกิน 10 รายการตามข้อจำกัดของ ${scheme.authorityShortName} · ${formatNumber(batches.length)} รอบใน 14 วัน · ส่งครั้งล่าสุด ${formatRelativeTH(provider.lastSentAt)}`}
         />
-
-        {batches.length === 0 ? (
-          <EmptyState
-            icon={MessageSquareWarning}
-            title="ยังไม่มีรอบการส่งในช่วงนี้"
-            hint="หน่วยบริการนี้ยังไม่ได้ส่งเคลมเข้ามาในช่วง 14 วันที่ผ่านมา"
-          />
-        ) : (
-          <DataTable columns={6}>
-            <DataTableHead>
-              <Column>รอบการส่ง</Column>
-              <Column>เวลาที่ส่ง</Column>
-              <Column align="right">ทั้งหมด</Column>
-              <Column align="right">สำเร็จ</Column>
-              <Column align="right">ไม่สำเร็จ</Column>
-              <Column align="center">ผลลัพธ์</Column>
-            </DataTableHead>
-            <tbody>
-              {batches.map((batch) => (
-                <DataTableRow key={batch.batchId}>
-                  <td className="px-4 py-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setOpenBatch(batch.batchId)}
-                      className="inline-flex cursor-pointer items-center gap-1.5 font-mono text-xs text-primary transition-colors hover:underline"
-                      aria-label={`ดูรายการในรอบ ${batch.batchId}`}
-                    >
-                      <ListTree className="size-3.5" aria-hidden />
-                      {batch.batchId}
-                    </button>
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">
-                    {formatDateTimeTH(batch.submittedAt)}
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">
-                    {formatNumber(batch.total)}
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-success">
-                    {formatNumber(batch.success)}
-                  </td>
-                  <td className="px-4 py-2.5 text-right font-medium tabular-nums text-danger">
-                    {formatNumber(batch.failed)}
-                  </td>
-                  <td className="px-4 py-2.5 text-center">
-                    <StatusBadge
-                      tone={OUTCOME_TONE[batch.outcome]}
-                      label={CLAIM_OUTCOME_LABEL[batch.outcome]}
-                    />
-                  </td>
-                </DataTableRow>
-              ))}
-            </tbody>
-          </DataTable>
-        )}
+        <ClaimRecordsTable code={code} schemeId={scheme.id} />
       </Card>
-
-      {openBatch && (
-        <BatchRecordsDialog
-          batchId={openBatch}
-          schemeId={schemeId}
-          onClose={() => setOpenBatch(null)}
-        />
-      )}
     </div>
   );
 }

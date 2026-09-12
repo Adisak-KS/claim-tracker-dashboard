@@ -17,9 +17,10 @@ export async function GET(
     );
   }
 
-  const batches = getSubmissionBatches()
-    .filter((b) => b.providerCode === provider.newCode)
-    .slice(0, 20);
+  /** ห้ามตัดจำนวน เพราะหน้าจอเอาไปนับรอบและยอดต้องตรงกับการ์ดสรุป */
+  const batches = getSubmissionBatches().filter(
+    (b) => b.providerCode === provider.newCode,
+  );
 
   await new Promise((resolve) => setTimeout(resolve, 300));
   return NextResponse.json({ provider, batches });
