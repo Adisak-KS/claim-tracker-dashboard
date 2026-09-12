@@ -175,7 +175,7 @@ export function ClaimRecordsTable({
         />
       ) : isPending ? (
         <div className="p-4">
-          <TableSkeleton rows={pageSize > 20 ? 20 : pageSize} columns={5} />
+          <TableSkeleton rows={pageSize > 20 ? 20 : pageSize} columns={6} />
         </div>
       ) : data.rows.length === 0 ? (
         <EmptyState
@@ -190,11 +190,12 @@ export function ClaimRecordsTable({
       ) : (
         <>
           <DataTable
-            columns={5}
+            columns={6}
             className={cn(isFetching && "opacity-60 transition-opacity")}
           >
             <DataTableHead>
               <Column>VN</Column>
+              <Column>รอบการส่ง</Column>
               <Column>เวลาที่ส่ง</Column>
               <Column align="center">ส่งเบิกใหม่</Column>
               <Column align="center">ผลลัพธ์</Column>
@@ -207,13 +208,11 @@ export function ClaimRecordsTable({
                   className="cursor-pointer"
                   onClick={() => setOpenRecord(record)}
                 >
-                  <td className="px-4 py-2.5">
-                    <span className="block font-mono text-sm text-foreground">
-                      {record.vn}
-                    </span>
-                    <span className="block font-mono text-xs text-muted-foreground">
-                      {record.batchId}
-                    </span>
+                  <td className="px-4 py-2.5 font-mono text-sm text-foreground">
+                    {record.vn}
+                  </td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
+                    {record.batchId}
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground">
                     {formatDateTimeTH(record.submittedAt)}
