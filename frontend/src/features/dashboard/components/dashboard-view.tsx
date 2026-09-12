@@ -171,7 +171,10 @@ export function DashboardView() {
                 {isPending ? (
                   <ProvidersNeedHelpSkeleton />
                 ) : (
-                  <ProvidersNeedHelp rows={data.providersNeedingHelp} />
+                  <ProvidersNeedHelp
+                    rows={data.providersNeedingHelp}
+                    schemeId={data.schemeId}
+                  />
                 )}
               </div>
             </Card>

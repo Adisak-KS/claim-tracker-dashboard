@@ -14,7 +14,7 @@ import {
 
 export const NHSO_13F_ID = "nhso-13f";
 
-const definition: SchemeDefinition = {
+const buildDefinition = (): SchemeDefinition => ({
   id: NHSO_13F_ID,
   label: "13 แฟ้ม (สปสช.)",
   datasetLabel: "ชุดข้อมูลมาตรฐาน 13PLUS",
@@ -81,7 +81,9 @@ const definition: SchemeDefinition = {
     },
   ],
   enabled: true,
-};
+  statuses: NHSO_STATUSES,
+  issues: NHSO_ISSUES,
+});
 
 /** สถานะที่ใช้บ่อย คัดจาก 66 รหัสเต็มในเอกสาร */
 export const NHSO_STATUSES: SchemeStatus[] = [
@@ -213,6 +215,8 @@ export const NHSO_ISSUES: SchemeIssue[] = [
     groupId: "G",
   },
 ];
+
+const definition = buildDefinition();
 
 registerScheme(definition);
 

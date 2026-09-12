@@ -70,12 +70,13 @@ export interface SourceSystemBreakdown {
 }
 
 /**
- * เทียบก่อนกับหลังรายหน่วยบริการ ใช้รูปแบบ dumbbell
+ * เทียบก่อนกับหลังรายหน่วยบริการ
  * ไม่ใช้ "อันดับส่งสำเร็จมากสุด" เพราะรายใหญ่จะชนะตลอดโดยไม่ได้แปลว่าทำงานดี
  * และไม่ใช้อัตราสูงสุด เพราะรายที่ส่ง 5 รายการผ่านหมดจะได้ 100% ซึ่งไม่มีความหมาย
  */
 export interface ProviderMovement {
-  code: string;
+  /** รหัส 9 หลักใหม่ มีครบทุกหน่วยจึงใช้อ้างอิงได้เสมอ */
+  newCode: string;
   name: string;
   type: ProviderType;
   province: string;

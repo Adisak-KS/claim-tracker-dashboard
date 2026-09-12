@@ -33,9 +33,9 @@ export function MostImproved({ rows }: { rows: ProviderMovement[] }) {
         const isLead = index < LEAD_COUNT;
 
         return (
-          <li key={row.code}>
+          <li key={row.newCode}>
             <Link
-              href={`/providers/${row.code}`}
+              href={`/providers/${row.newCode}`}
               className={cn(
                 "flex items-center gap-3 px-4 transition-colors hover:bg-surface-muted",
                 isLead ? "py-3" : "py-2.5",

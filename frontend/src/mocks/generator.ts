@@ -15,12 +15,7 @@ import type {
 } from "@/lib/domain/summary";
 import { NHSO_ISSUES, NHSO_13F_ID } from "@/lib/schemes/nhso-13f";
 import { getScheme } from "@/lib/domain/scheme";
-import {
-  DISTRICTS,
-  NAME_PATTERN,
-  PROVINCES,
-  TYPE_DISTRIBUTION,
-} from "./provider-registry";
+import { REGISTRY } from "./moph-registry";
 
 /** ข้อมูลจำลองต้องคงที่ทุกครั้ง ไม่งั้นแยกไม่ออกว่าเลขเปลี่ยนเพราะแก้โค้ดหรือเพราะสุ่มใหม่ */
 function createRng(seed: number) {
@@ -38,69 +33,59 @@ function pick<T>(rng: () => number, items: readonly T[]): T {
   return items[Math.floor(rng() * items.length)];
 }
 
-function pickType(rng: () => number): ProviderType {
-  const roll = rng();
-  let acc = 0;
-  for (const entry of TYPE_DISTRIBUTION) {
-    acc += entry.weight;
-    if (roll <= acc) return entry.type;
-  }
-  return "other";
-}
-
-export const TOTAL_PROVIDERS = 5012;
+export const TOTAL_PROVIDERS = REGISTRY.length;
 
 /** ขนาดการส่งต่อวันต่างกันตามประเภท คลินิกกับ รพ.ศูนย์ ต่างกันหลักร้อยเท่า */
 const VOLUME_BY_TYPE: Record<ProviderType, [number, number]> = {
   regional_hospital: [3200, 6800],
   general_hospital: [1400, 3600],
   community_hospital: [320, 1100],
-  health_promoting_hospital: [25, 180],
-  specialized_hospital: [280, 900],
-  other_affiliation_hospital: [240, 850],
+  non_moph_hospital: [280, 1200],
+  non_ops_hospital: [260, 1100],
   private_hospital: [180, 1400],
-  clinic: [12, 140],
-  pharmacy: [5, 60],
-  other: [8, 90],
+  health_promoting_hospital: [25, 180],
+  urban_health_center: [40, 260],
+  health_center: [35, 240],
+  lao_health_center: [20, 160],
+  hospital_branch: [30, 200],
+  community_health_facility: [10, 90],
+  primary_care_unit: [15, 120],
+  private_clinic: [12, 140],
+  district_health_office: [8, 70],
+  provincial_health_office: [10, 95],
+  academic_center: [15, 130],
 };
+
+/** รพ.สต. คลินิก และหน่วยเล็กมักใช้ระบบที่ต่างจาก รพ. ใหญ่ */
+const SMALL_TIER_SYSTEMS: SourceSystem[] = ["EHP", "NHIP"];
 
 let providerCache: Provider[] | null = null;
 
 export function getProviders(): Provider[] {
   if (providerCache) return providerCache;
   const rng = createRng(20260912);
-  const rows: Provider[] = [];
 
-  for (let i = 0; i < TOTAL_PROVIDERS; i += 1) {
-    const province = pick(rng, PROVINCES);
-    const district = pick(rng, DISTRICTS);
-    const type = pickType(rng);
-
-    // รพ.สต. กับคลินิกมักใช้ระบบที่ต่างจาก รพ. ใหญ่
-    const small =
-      type === "health_promoting_hospital" ||
-      type === "clinic" ||
-      type === "pharmacy";
-    const sourceSystem: SourceSystem = small
-      ? rng() < 0.6
-        ? "EHP"
-        : "NHIP"
+  providerCache = REGISTRY.map((entry) => {
+    const isSmall = PROVIDER_TYPE_INFO[entry.type].tier === "small";
+    const sourceSystem: SourceSystem = isSmall
+      ? pick(rng, SMALL_TIER_SYSTEMS)
       : rng() < 0.8
         ? "HOSxP"
         : pick<SourceSystem>(rng, ["EHP", "NHIP", "OTHER"]);
 
-    rows.push({
-      code: String(10000 + i),
-      name: NAME_PATTERN[type](district, province.name),
-      type,
-      province: province.name,
-      healthZone: province.healthZone,
+    return {
+      newCode: entry.newCode,
+      legacyCode: entry.legacyCode,
+      shortCode: entry.shortCode,
+      name: entry.name,
+      type: entry.type,
+      province: entry.province,
+      healthZone: entry.healthZone,
       sourceSystem,
-    });
-  }
+    };
+  });
 
-  providerCache = rows;
-  return rows;
+  return providerCache;
 }
 
 const ISSUE_WEIGHT: Record<string, number> = {
@@ -320,7 +305,7 @@ function buildMostImproved(scale: number): ProviderMovement[] {
         : Math.max(20, Math.min(99.9, p.successRate + (rng() * 16 - 8)));
 
       return {
-        code: p.code,
+        newCode: p.newCode,
         name: p.name,
         type: p.type,
         province: p.province,

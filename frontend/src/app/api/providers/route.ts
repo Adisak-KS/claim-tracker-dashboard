@@ -26,7 +26,9 @@ export async function GET(request: Request) {
     rows = rows.filter(
       (r) =>
         r.name.toLowerCase().includes(q) ||
-        r.code.includes(q) ||
+        r.newCode.toLowerCase().includes(q) ||
+        r.legacyCode?.includes(q) ||
+        r.shortCode?.includes(q) ||
         r.province.toLowerCase().includes(q),
     );
   }

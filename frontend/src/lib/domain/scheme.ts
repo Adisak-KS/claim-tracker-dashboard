@@ -51,6 +51,10 @@ export interface SchemeDefinition {
   funds: { id: string; label: string }[];
   stages: StatusStage[];
   issueGroups: IssueGroup[];
+  /** สถานะที่หน่วยงานปลายทางส่งกลับมา */
+  statuses: SchemeStatus[];
+  /** รหัสปัญหาพร้อมวิธีแก้ */
+  issues: SchemeIssue[];
   /** true = ประเภทนี้พร้อมใช้งานจริงแล้ว */
   enabled: boolean;
 }
@@ -67,6 +71,33 @@ export function getScheme(id: SchemeId): SchemeDefinition | undefined {
 
 export function listSchemes(): SchemeDefinition[] {
   return [...registry.values()].filter((s) => s.enabled);
+}
+
+/**
+ * หน้าจอต้องเรียกผ่านฟังก์ชันพวกนี้เท่านั้น ห้าม import ไฟล์ scheme ตรง ๆ
+ * ไม่งั้นพอมีประเภทที่ 2 หน้าจอจะขึ้นรหัสดิบแทนชื่อไทย เพราะไปหาในประเภทที่ผิด
+ */
+export function getIssue(
+  schemeId: SchemeId,
+  code: string,
+): SchemeIssue | undefined {
+  return registry.get(schemeId)?.issues.find((i) => i.code === code);
+}
+
+export function getIssueLabel(schemeId: SchemeId, code: string | null): string {
+  if (!code) return "ไม่มี";
+  return getIssue(schemeId, code)?.label ?? code;
+}
+
+export function getStatus(
+  schemeId: SchemeId,
+  code: string,
+): SchemeStatus | undefined {
+  return registry.get(schemeId)?.statuses.find((s) => s.code === code);
+}
+
+export function getStatusLabel(schemeId: SchemeId, code: string): string {
+  return getStatus(schemeId, code)?.label ?? code;
 }
 
 /** ประเภทที่ใช้เมื่อผู้ใช้ยังไม่ได้เลือก */

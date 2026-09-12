@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PROVIDER_TYPE_INFO } from "@/lib/domain/provider";
 import type { ProviderSummary } from "@/lib/domain/summary";
-import { NHSO_ISSUES } from "@/lib/schemes/nhso-13f";
+import type { SchemeId } from "@/lib/domain/scheme";
+import { getIssueLabel } from "@/lib/domain/scheme";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { formatNumber, formatPercent, formatRelativeTH } from "@/lib/utils";
@@ -16,12 +17,13 @@ function rateTone(rate: number) {
   return "danger" as const;
 }
 
-function issueLabel(code: string | null): string {
-  if (!code) return "ไม่มี";
-  return NHSO_ISSUES.find((i) => i.code === code)?.label ?? code;
-}
-
-export function ProvidersNeedHelp({ rows }: { rows: ProviderSummary[] }) {
+export function ProvidersNeedHelp({
+  rows,
+  schemeId,
+}: {
+  rows: ProviderSummary[];
+  schemeId: SchemeId;
+}) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[58rem] border-collapse text-sm">
@@ -40,18 +42,18 @@ export function ProvidersNeedHelp({ rows }: { rows: ProviderSummary[] }) {
         <tbody>
           {rows.map((row) => (
             <tr
-              key={row.code}
+              key={row.newCode}
               className="border-b border-border transition-colors last:border-0 hover:bg-surface-muted"
             >
               <td className="px-4 py-2.5">
                 <Link
-                  href={`/providers/${row.code}`}
+                  href={`/providers/${row.newCode}`}
                   className="font-medium text-foreground hover:text-primary hover:underline"
                 >
                   {row.name}
                 </Link>
                 <span className="block text-xs text-muted-foreground">
-                  {row.code} · {row.province} · เขต {row.healthZone}
+                  {row.shortCode ?? row.newCode} · {row.province} · เขต {row.healthZone}
                 </span>
               </td>
               <td className="px-4 py-2.5 text-muted-foreground">
@@ -73,7 +75,7 @@ export function ProvidersNeedHelp({ rows }: { rows: ProviderSummary[] }) {
                 />
               </td>
               <td className="px-4 py-2.5 text-muted-foreground">
-                {issueLabel(row.topIssueCode)}
+                {getIssueLabel(schemeId, row.topIssueCode)}
               </td>
               <td className="px-4 py-2.5 text-muted-foreground">
                 {formatRelativeTH(row.lastSentAt)}
