@@ -12,7 +12,7 @@ import {
 import { useSyncExternalStore } from "react";
 import type { TrendPoint } from "@/lib/domain/summary";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCompact, formatNumber } from "@/lib/utils";
+import { formatAxisNumber, formatNumber } from "@/lib/utils";
 
 function formatAxisDate(value: string): string {
   return new Intl.DateTimeFormat("th-TH", {
@@ -90,7 +90,7 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
             tickLine={false}
           />
           <YAxis
-            tickFormatter={formatCompact}
+            tickFormatter={formatAxisNumber}
             tick={{ fontSize: 12, fill: colors.muted }}
             axisLine={false}
             tickLine={false}

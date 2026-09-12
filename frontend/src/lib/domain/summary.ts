@@ -1,4 +1,4 @@
-import type { Provider, ProviderType } from "./provider";
+import type { Provider, ProviderType, SourceSystem } from "./provider";
 import type { SchemeId } from "./scheme";
 
 export interface ProviderSummary extends Provider {
@@ -53,6 +53,41 @@ export interface ProviderTypeBreakdown {
   strugglingCount: number;
 }
 
+/**
+ * สรุปตามระบบต้นทาง เป็นมุมที่ต่างจากมุมอื่นตรงที่ระบบเป็นของทีมเราเอง
+ * ถ้าระบบใดอัตราสำเร็จต่ำผิดปกติ แปลว่าน่าจะเป็นบั๊กของระบบนั้น
+ * ไม่ใช่ความผิดของหน่วยบริการ คนละทางแก้กันสิ้นเชิง
+ */
+export interface SourceSystemBreakdown {
+  system: SourceSystem;
+  providerCount: number;
+  sent: number;
+  success: number;
+  failed: number;
+  successRate: number;
+  /** ห่างจากค่าเฉลี่ยรวมกี่จุด ค่าลบมากคือผิดปกติ */
+  rateVsAverage: number;
+}
+
+/**
+ * เทียบก่อนกับหลังรายหน่วยบริการ ใช้รูปแบบ dumbbell
+ * ไม่ใช้ "อันดับส่งสำเร็จมากสุด" เพราะรายใหญ่จะชนะตลอดโดยไม่ได้แปลว่าทำงานดี
+ * และไม่ใช้อัตราสูงสุด เพราะรายที่ส่ง 5 รายการผ่านหมดจะได้ 100% ซึ่งไม่มีความหมาย
+ */
+export interface ProviderMovement {
+  code: string;
+  name: string;
+  type: ProviderType;
+  province: string;
+  sourceSystem: SourceSystem;
+  previousRate: number;
+  currentRate: number;
+  /** จุดที่เปลี่ยนไป ค่าบวกคือดีขึ้น */
+  deltaPoints: number;
+  /** ปริมาณที่ส่งในช่วงนี้ ใช้กันไม่ให้รายเล็กมากติดอันดับด้วยความบังเอิญ */
+  sent: number;
+}
+
 export interface DashboardSummary {
   schemeId: SchemeId;
   range: { from: string; to: string };
@@ -70,6 +105,8 @@ export interface DashboardSummary {
   topIssueGroups: IssueGroupRank[];
   fundBreakdown: FundBreakdown[];
   providerTypeBreakdown: ProviderTypeBreakdown[];
+  sourceSystemBreakdown: SourceSystemBreakdown[];
+  mostImproved: ProviderMovement[];
   /**
    * เรียงด้วยคะแนนความเร่งด่วน ไม่ใช่จำนวนดิบ
    * ไม่งั้นคลินิกที่พัง 100% จะถูกกลบด้วย รพ.ศูนย์ที่พัง 10%

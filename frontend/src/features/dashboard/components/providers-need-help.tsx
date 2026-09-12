@@ -24,11 +24,12 @@ function issueLabel(code: string | null): string {
 export function ProvidersNeedHelp({ rows }: { rows: ProviderSummary[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[52rem] border-collapse text-sm">
+      <table className="w-full min-w-[58rem] border-collapse text-sm">
         <thead>
           <tr className="border-b border-border text-left text-xs text-muted-foreground">
             <th className="px-4 py-2.5 font-medium">หน่วยบริการ</th>
             <th className="px-4 py-2.5 font-medium">ประเภท</th>
+            <th className="px-4 py-2.5 font-medium">ระบบ</th>
             <th className="px-4 py-2.5 text-right font-medium">ส่งทั้งหมด</th>
             <th className="px-4 py-2.5 text-right font-medium">ไม่สำเร็จ</th>
             <th className="px-4 py-2.5 text-center font-medium">อัตราสำเร็จ</th>
@@ -55,6 +56,9 @@ export function ProvidersNeedHelp({ rows }: { rows: ProviderSummary[] }) {
               </td>
               <td className="px-4 py-2.5 text-muted-foreground">
                 {PROVIDER_TYPE_INFO[row.type].shortLabel}
+              </td>
+              <td className="px-4 py-2.5 text-muted-foreground">
+                {row.sourceSystem}
               </td>
               <td className="px-4 py-2.5 text-right tabular-nums">
                 {formatNumber(row.totalSent)}

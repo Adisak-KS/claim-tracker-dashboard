@@ -15,10 +15,28 @@ export function formatPercent(value: number, digits = 1): string {
   return `${value.toFixed(digits)}%`;
 }
 
-/** ตัวเลขใหญ่ในการ์ด KPI ย่อให้อ่านไว เช่น 1.28 ล้าน */
+/**
+ * ย่อเฉพาะหลักล้านขึ้นไป หลักแสนคนไทยอ่านเต็มได้สบายอยู่แล้ว
+ * ไม่ใช้หน่วย "พัน" กับเลขหลักแสน เพราะคนไทยไม่พูดว่า "340 พัน"
+ */
 export function formatCompact(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)} ล้าน`;
-  if (value >= 100_000) return `${(value / 1_000).toFixed(0)} พัน`;
+  return formatNumber(value);
+}
+
+/**
+ * แกนกราฟมีที่จำกัด ย่อได้ถึงหลักแสนโดยใช้หน่วยไทยที่ถูกต้อง
+ * ใช้เฉพาะแกนกราฟ ห้ามใช้กับตัวเลขที่ผู้ใช้ต้องเอาไปกระทบยอด
+ */
+export function formatAxisNumber(value: number): string {
+  if (value >= 1_000_000) {
+    const millions = value / 1_000_000;
+    return `${millions % 1 === 0 ? millions : millions.toFixed(1)} ล้าน`;
+  }
+  if (value >= 100_000) {
+    const hundredThousands = value / 100_000;
+    return `${hundredThousands % 1 === 0 ? hundredThousands : hundredThousands.toFixed(1)} แสน`;
+  }
   return formatNumber(value);
 }
 

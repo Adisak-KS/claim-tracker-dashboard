@@ -8,7 +8,9 @@ import type {
   DashboardSummary,
   IssueGroupRank,
   ProviderSummary,
+  ProviderMovement,
   ProviderTypeBreakdown,
+  SourceSystemBreakdown,
   TrendPoint,
 } from "@/lib/domain/summary";
 import { NHSO_ISSUES, NHSO_13F_ID } from "@/lib/schemes/nhso-13f";
@@ -141,7 +143,7 @@ export function getProviderSummaries(): ProviderSummary[] {
 
     // ส่วนใหญ่ส่งผ่านหมด ปัญหากระจุกที่ส่วนน้อย
     const healthRoll = rng();
-    const successRate =
+    const baseRate =
       healthRoll > 0.97
         ? 45 + rng() * 35
         : healthRoll > 0.88
@@ -149,6 +151,10 @@ export function getProviderSummaries(): ProviderSummary[] {
           : healthRoll > 0.62
             ? 92 + rng() * 6
             : 100;
+
+    // NHIP ตั้งใจให้แย่กว่าระบบอื่น เพื่อพิสูจน์ว่าหน้าจอจับความผิดปกติรายระบบได้
+    const successRate =
+      p.sourceSystem === "NHIP" ? baseRate * (0.78 + rng() * 0.08) : baseRate;
 
     const successCount = Math.round((totalSent * successRate) / 100);
     const remaining = totalSent - successCount;
@@ -296,6 +302,82 @@ function buildTypeBreakdown(scale: number): ProviderTypeBreakdown[] {
 }
 
 /**
+ * รายที่ส่งน้อยมากต้องตัดออก ไม่งั้นร้านยาที่ส่ง 3 รายการแล้วผ่านหมด
+ * จะขึ้นอันดับ 1 ว่า "ดีขึ้น 100 จุด" ซึ่งเป็นความบังเอิญ ไม่ใช่ผลงาน
+ */
+const MIN_VOLUME_FOR_MOVEMENT = 120;
+
+function buildMostImproved(scale: number): ProviderMovement[] {
+  const rng = createRng(31517);
+
+  return getProviderSummaries()
+    .filter((p) => p.totalSent >= MIN_VOLUME_FOR_MOVEMENT)
+    .map((p) => {
+      // จำลองอัตราของช่วงก่อนหน้า ที่ดีขึ้นจริงจะมีช่องว่างกว้าง
+      const improved = rng() < 0.18;
+      const previousRate = improved
+        ? Math.max(35, p.successRate - (12 + rng() * 30))
+        : Math.max(20, Math.min(99.9, p.successRate + (rng() * 16 - 8)));
+
+      return {
+        code: p.code,
+        name: p.name,
+        type: p.type,
+        province: p.province,
+        sourceSystem: p.sourceSystem,
+        previousRate: Number(previousRate.toFixed(1)),
+        currentRate: p.successRate,
+        deltaPoints: Number((p.successRate - previousRate).toFixed(1)),
+        sent: Math.round(p.totalSent * scale),
+      };
+    })
+    .sort((a, b) => b.deltaPoints - a.deltaPoints)
+    .slice(0, 5);
+}
+
+function buildSystemBreakdown(
+  scale: number,
+  overallRate: number,
+): SourceSystemBreakdown[] {
+  const summaries = getProviderSummaries();
+  const bySystem = new Map<SourceSystem, SourceSystemBreakdown>();
+
+  for (const s of summaries) {
+    const existing = bySystem.get(s.sourceSystem);
+    const row = existing ?? {
+      system: s.sourceSystem,
+      providerCount: 0,
+      sent: 0,
+      success: 0,
+      failed: 0,
+      successRate: 0,
+      rateVsAverage: 0,
+    };
+
+    row.providerCount += 1;
+    row.sent += s.totalSent * scale;
+    row.success += s.successCount * scale;
+    row.failed += s.failedCount * scale;
+
+    if (!existing) bySystem.set(s.sourceSystem, row);
+  }
+
+  return [...bySystem.values()]
+    .map((r) => {
+      const rate = (r.success / (r.sent || 1)) * 100;
+      return {
+        ...r,
+        sent: Math.round(r.sent),
+        success: Math.round(r.success),
+        failed: Math.round(r.failed),
+        successRate: Number(rate.toFixed(1)),
+        rateVsAverage: Number((rate - overallRate).toFixed(1)),
+      };
+    })
+    .sort((a, b) => b.sent - a.sent);
+}
+
+/**
  * คะแนนความเร่งด่วน: รวมอัตราที่พังกับปริมาณที่กระทบ
  * เรียงด้วยจำนวนดิบอย่างเดียวไม่ได้ เพราะคลินิกที่พัง 100% จะไม่มีวันติดอันดับ
  */
@@ -391,6 +473,8 @@ export function getDashboardSummary(
       };
     }),
     providerTypeBreakdown: buildTypeBreakdown(scale),
+    sourceSystemBreakdown: buildSystemBreakdown(scale, successRate),
+    mostImproved: buildMostImproved(scale),
     providersNeedingHelp,
     generatedAt: new Date().toISOString(),
   };

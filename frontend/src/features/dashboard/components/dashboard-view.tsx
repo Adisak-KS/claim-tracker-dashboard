@@ -21,6 +21,11 @@ import {
   ProviderTypeBreakdownTable,
   ProviderTypeBreakdownSkeleton,
 } from "./provider-type-breakdown";
+import {
+  SourceSystemBreakdownTable,
+  SourceSystemBreakdownSkeleton,
+} from "./source-system-breakdown";
+import { MostImproved, MostImprovedSkeleton } from "./most-improved";
 
 const DEFAULT_RANGE = RANGE_PRESETS.find((p) => p.id === "last7")!;
 
@@ -146,6 +151,18 @@ export function DashboardView() {
 
           <Card>
             <CardHeader
+              title="สรุปตามระบบต้นทาง"
+              description="ถ้าระบบใดอัตราสำเร็จต่ำผิดปกติ ให้ทีมพัฒนาตรวจตัวระบบก่อน อาจไม่ใช่ความผิดของหน่วยบริการ"
+            />
+            {isPending ? (
+              <SourceSystemBreakdownSkeleton />
+            ) : (
+              <SourceSystemBreakdownTable rows={data.sourceSystemBreakdown} />
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader
               title="หน่วยบริการที่ต้องช่วยด่วน"
               description="เรียงตามความเร่งด่วน คิดจากอัตราที่ส่งไม่สำเร็จควบคู่กับปริมาณที่กระทบ"
             />
@@ -153,6 +170,18 @@ export function DashboardView() {
               <ProvidersNeedHelpSkeleton />
             ) : (
               <ProvidersNeedHelp rows={data.providersNeedingHelp} />
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="หน่วยบริการที่ดีขึ้นมากที่สุด"
+              description="เทียบอัตราสำเร็จกับช่วงก่อนหน้า นับเฉพาะที่ส่งมากพอจะเชื่อถือได้"
+            />
+            {isPending ? (
+              <MostImprovedSkeleton />
+            ) : (
+              <MostImproved rows={data.mostImproved} />
             )}
           </Card>
         </>
