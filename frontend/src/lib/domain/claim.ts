@@ -36,6 +36,28 @@ export interface ClaimIssueRef {
 }
 
 /**
+ * ข้อความที่หน่วยงานปลายทางตอบกลับมาจริง ไม่ใช่ที่เราแปลเอง
+ *
+ * เจ้าหน้าที่ต้องเห็นของจริง เพราะข้อความจาก สปสช. มักระบุเจาะจงกว่าคำอธิบาย
+ * ที่เราเขียนไว้ เช่นบอก seq หรือชื่อ field ที่ผิดมาด้วย
+ * ซึ่งคำอธิบายกลางของเราบอกไม่ได้ เพราะเขียนไว้ครอบคลุมทุกเคส
+ *
+ * ที่มาโครงสร้าง: API Specification 13Plus v1.3.5.1
+ * endpoint POST /stddataset/api/v2/status-tracks/details
+ * ฟิลด์ results[] มี code, message, solution, allowClaim
+ */
+export interface AuthorityResponse {
+  /** รหัสที่หน่วยงานปลายทางส่งกลับมา */
+  code: string;
+  /** ข้อความดิบจากหน่วยงานปลายทาง ห้ามแก้ไขหรือแปล */
+  message: string;
+  /** วิธีแก้ที่หน่วยงานปลายทางแนะนำ บางรหัสไม่ส่งมา */
+  solution?: string;
+  /** Y = แก้แล้วส่งเบิกใหม่ได้ N = จบแล้ว ต้องอุทธรณ์ */
+  allowClaim: "Y" | "N" | null;
+}
+
+/**
  * 1 batch คือการกดส่ง 1 ครั้งของหน่วยบริการ ไม่ใช่ 1 รายการผู้ป่วย
  * หน้าจอแสดงระดับ batch เพราะผู้ใช้ติดตามเป็นรอบการส่ง ไม่ได้ไล่ดูรายคน
  */
@@ -54,4 +76,6 @@ export interface SubmissionBatch {
   outcome: ClaimOutcome;
   /** รหัสปัญหาที่พบมากที่สุดใน batch นี้ */
   topIssueCode: string | null;
+  /** ข้อความที่หน่วยงานปลายทางตอบกลับมาจริง */
+  authorityResponses?: AuthorityResponse[];
 }

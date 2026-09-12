@@ -15,8 +15,12 @@ import type {
 } from "@/lib/domain/summary";
 import "@/lib/schemes";
 import { NHSO_ISSUES, NHSO_13F_ID } from "@/lib/schemes/nhso-13f";
-import type { ClaimOutcome, SubmissionBatch } from "@/lib/domain/claim";
-import { getScheme } from "@/lib/domain/scheme";
+import type {
+  AuthorityResponse,
+  ClaimOutcome,
+  SubmissionBatch,
+} from "@/lib/domain/claim";
+import { getIssue, getScheme } from "@/lib/domain/scheme";
 import { REGISTRY } from "./moph-registry";
 
 /** ข้อมูลจำลองต้องคงที่ทุกครั้ง ไม่งั้นแยกไม่ออกว่าเลขเปลี่ยนเพราะแก้โค้ดหรือเพราะสุ่มใหม่ */
@@ -472,6 +476,51 @@ export function getDashboardSummary(
 }
 
 /**
+ * ข้อความจริงที่ สปสช. ตอบกลับมา ต่างจากคำอธิบายกลางของเราตรงที่ระบุเจาะจง
+ * เช่นบอกเลขแฟ้ม seq และชื่อ field ที่ผิด ตามรูปแบบในเอกสาร
+ * ตัวอย่าง C100: "แฟ้ม [File No.] Seq.[SEQ] ข้อมูล [Field Name] ..."
+ */
+const FILE_NAMES = ["IPD", "OPD", "CHA", "CHT", "DRU", "ADP", "AER"];
+const FIELD_NAMES = [
+  "CHARGE_CODE",
+  "INVOICE_NO",
+  "DATEADM",
+  "DATEDSC",
+  "TOTAL_AMOUNT",
+  "INSCL",
+];
+
+function buildAuthorityResponses(
+  rng: () => number,
+  code: string,
+  failed: number,
+): AuthorityResponse[] {
+  const issue = getIssue(NHSO_13F_ID, code);
+  const file = pick(rng, FILE_NAMES);
+  const field = pick(rng, FIELD_NAMES);
+  const seq = 1 + Math.floor(rng() * Math.max(1, failed));
+
+  const isLocal = code.startsWith("LOCAL_") || code === "AUTH_TOKEN";
+  const message = isLocal
+    ? (issue?.label ?? code)
+    : `แฟ้ม ${file} Seq.${seq} ข้อมูล ${field} ${issue?.label ?? "ไม่ผ่านการตรวจสอบ"}`;
+
+  return [
+    {
+      code,
+      message,
+      solution: issue?.remedy,
+      allowClaim:
+        issue?.resubmittable === null || issue?.resubmittable === undefined
+          ? null
+          : issue.resubmittable
+            ? "Y"
+            : "N",
+    },
+  ];
+}
+
+/**
  * batch ย้อนหลัง 14 วัน หน่วยบริการหนึ่งส่งได้หลายรอบต่อวัน
  * สร้างจาก summary เดิม ตัวเลขจึงสอดคล้องกับหน้าอื่น ไม่ใช่สุ่มแยกชุด
  */
@@ -498,6 +547,7 @@ export function getSubmissionBatches(): SubmissionBatch[] {
 
       const outcome: ClaimOutcome =
         failed > 0 ? "failed" : pending > 0 ? "pending" : "success";
+      const topIssue = failed > 0 ? weightedIssue(rng) : null;
 
       rows.push({
         batchId: `B${String(rows.length + 1).padStart(7, "0")}`,
@@ -514,7 +564,10 @@ export function getSubmissionBatches(): SubmissionBatch[] {
         failed,
         pending,
         outcome,
-        topIssueCode: failed > 0 ? weightedIssue(rng) : null,
+        topIssueCode: topIssue,
+        authorityResponses: topIssue
+          ? buildAuthorityResponses(rng, topIssue, failed)
+          : undefined,
       });
     }
   }
