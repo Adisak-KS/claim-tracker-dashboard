@@ -164,9 +164,14 @@ export function Column({
 /**
  * ช่องชื่อที่ยาวได้ไม่จำกัด เช่นชื่อหน่วยบริการ
  *
- * 🔴 ใส่ max-width ที่ <td> ตรง ๆ ไม่ได้ผล เพราะตารางเป็น table-auto
- * เบราว์เซอร์จะคำนวณความกว้างจากเนื้อหาแล้วมองข้าม max-width ของเซลล์ไป
- * ต้องครอบด้วย <div> แล้วคุมความกว้างที่ตัวนั้นแทน
+ * มี 2 กับดักที่ต้องแก้พร้อมกัน
+ * 1. ใส่ max-width ที่ <td> ตรง ๆ ไม่ได้ผล เพราะตารางเป็น table-auto
+ *    เบราว์เซอร์คำนวณความกว้างจากเนื้อหาแล้วมองข้าม max-width ของเซลล์
+ *    จึงต้องครอบด้วย <div> แล้วคุมความกว้างที่ตัวนั้นแทน
+ * 2. 🔴 ต้องสั่ง whitespace-normal ที่ <div> ข้างในด้วย ไม่ใช่แค่ที่ <td>
+ *    เพราะ DataTableRow สั่ง [&>td]:whitespace-nowrap ครอบทุกเซลล์
+ *    ซึ่ง specificity สูงกว่า class ธรรมดาบน <td> เลยชนะเสมอ
+ *    ถ้าตัดบรรทัดไม่ได้ ข้อความจะล้นไปทับคอลัมน์ถัดไป
  */
 export function NameCell({
   children,
@@ -176,8 +181,10 @@ export function NameCell({
   className?: string;
 }) {
   return (
-    <td className={cn("px-4 py-2.5 whitespace-normal", className)}>
-      <div className="w-full max-w-[22rem] min-w-0">{children}</div>
+    <td className={cn("px-4 py-2.5", className)}>
+      <div className="w-full max-w-[22rem] min-w-0 whitespace-normal">
+        {children}
+      </div>
     </td>
   );
 }
