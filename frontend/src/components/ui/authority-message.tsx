@@ -81,11 +81,9 @@ function AllowClaimBadge({ value }: { value: "Y" | "N" | null }) {
 /**
  * แบบย่อสำหรับใช้ในตารางที่มีหลายสิบแถว
  *
- * ตารางต้องสแกนเร็ว จึงเหลือบรรทัดเดียว ไม่มีกรอบไม่มีพื้นหลัง
- * ป้าย "แก้แล้วส่งใหม่ได้" ตัดออกเพราะซ้ำเกือบทุกแถวจนตาชิน
- * เหลือเฉพาะกรณีส่งใหม่ไม่ได้ ซึ่งเป็นตัวที่ต้องสังเกตจริง
- *
- * วิธีแก้ไม่แสดงตรงนี้ ให้ชี้เมาส์ดูใน title หรือเปิดรายละเอียดเอา
+ * ตารางต้องสแกนเร็ว จึงเหลือแค่รหัสกับข้อความ ไม่มีกรอบไม่มีพื้นหลัง
+ * ธงส่งเบิกใหม่ย้ายไปเป็นคอลัมน์ของตัวเอง จะได้กวาดตาหาได้ทันที
+ * วิธีแก้กับข้อความเต็มอยู่ใน modal ตอนกดที่แถว
  */
 export function AuthorityMessageInline({
   response,
@@ -107,16 +105,8 @@ export function AuthorityMessageInline({
         {response.code}
       </code>
 
-      <span className="min-w-0">
-        <span className="line-clamp-2 break-words text-sm text-foreground">
-          {response.message}
-        </span>
-        {blocked && (
-          <span className="mt-0.5 flex items-center gap-1 text-xs font-medium text-danger">
-            <CircleSlash className="size-3 shrink-0" aria-hidden />
-            ส่งใหม่ไม่ได้ ต้องอุทธรณ์
-          </span>
-        )}
+      <span className="line-clamp-2 min-w-0 break-words text-sm text-foreground">
+        {response.message}
       </span>
     </span>
   );

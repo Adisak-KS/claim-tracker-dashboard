@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { SearchX } from "lucide-react";
+import { CircleSlash, SearchX } from "lucide-react";
 import { apiGet } from "@/lib/api/client";
 import { AuthorityMessageInline } from "@/components/ui/authority-message";
 import {
@@ -39,6 +39,32 @@ const FILTERS = [
   { value: "pending", label: "รอผล" },
   { value: "all", label: "ทั้งหมด" },
 ];
+
+/**
+ * แยกเป็นคอลัมน์ของตัวเอง เพื่อให้กวาดตาหาแถวที่ต้องอุทธรณ์ได้ทันที
+ * ถ้ามีหลายรหัสในรายการเดียว ให้ยึดตัวที่แย่ที่สุด เพราะรายการนั้นจะติดทั้งรายการ
+ */
+function ResubmitCell({
+  responses,
+}: {
+  responses?: ClaimRecordDetail["responses"];
+}) {
+  if (!responses?.length) {
+    return <span className="text-sm text-muted-foreground">ไม่ติดปัญหา</span>;
+  }
+
+  if (responses.some((r) => r.allowClaim === "N")) {
+    return (
+      <StatusBadge tone="danger" label="ต้องอุทธรณ์" icon={CircleSlash} />
+    );
+  }
+
+  if (responses.every((r) => r.allowClaim === "Y")) {
+    return <StatusBadge tone="success" label="ส่งใหม่ได้" />;
+  }
+
+  return <span className="text-sm text-muted-foreground">ไม่ระบุ</span>;
+}
 
 /**
  * รายการเคลมระดับ VN ของหน่วยบริการหนึ่ง
@@ -133,7 +159,7 @@ export function ClaimRecordsTable({
         />
       ) : isPending ? (
         <div className="p-4">
-          <TableSkeleton rows={pageSize > 20 ? 20 : pageSize} columns={4} />
+          <TableSkeleton rows={pageSize > 20 ? 20 : pageSize} columns={5} />
         </div>
       ) : data.rows.length === 0 ? (
         <EmptyState
@@ -148,12 +174,13 @@ export function ClaimRecordsTable({
       ) : (
         <>
           <DataTable
-            columns={4}
+            columns={5}
             className={cn(isFetching && "opacity-60 transition-opacity")}
           >
             <DataTableHead>
               <Column>VN</Column>
               <Column>เวลาที่ส่ง</Column>
+              <Column align="center">ส่งเบิกใหม่</Column>
               <Column align="center">ผลลัพธ์</Column>
               <Column>ข้อความที่ตอบกลับ</Column>
             </DataTableHead>
@@ -174,6 +201,9 @@ export function ClaimRecordsTable({
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground">
                     {formatDateTimeTH(record.submittedAt)}
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
+                    <ResubmitCell responses={record.responses} />
                   </td>
                   <td className="px-4 py-2.5 text-center">
                     <StatusBadge
