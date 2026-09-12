@@ -62,13 +62,20 @@ export function DataTable({ columns, children, className }: DataTableProps) {
  * 3. sticky กับพื้นหลังต้องอยู่ที่ <th> ไม่ใช่ <thead>
  *    เบราว์เซอร์ไม่ทำ sticky ให้ <thead> ตรง ๆ มันเกาะที่เซลล์แต่ละตัว
  */
+/**
+ * พื้นหลังเข้มกว่าตัวตาราง ให้แยกหัวกับข้อมูลออกจากกันได้ทันที
+ * ใช้ surface-muted ไม่ใช่สีเข้มจัด เพราะหัวตารางไม่ใช่พระเอกของจอ
+ * ถ้าเข้มเกินตาจะไปจับหัวตารางแทนที่จะจับตัวเลข
+ */
 const STICKY_HEAD_CELL =
-  "sticky top-0 z-20 bg-surface shadow-[inset_0_-1px_0_var(--border)]";
+  "sticky top-0 z-20 bg-surface-muted shadow-[inset_0_-1px_0_var(--border-strong)]";
 
 export function DataTableHead({ children }: { children: ReactNode }) {
   return (
     <thead>
-      <tr className="text-left text-xs text-muted-foreground">{children}</tr>
+      <tr className="text-left text-xs font-semibold text-foreground">
+        {children}
+      </tr>
     </thead>
   );
 }
@@ -136,7 +143,7 @@ export function Column({
         type="button"
         onClick={() => onSort(sortKey)}
         className={cn(
-          "flex w-full cursor-pointer items-center gap-1 px-4 py-2.5 transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2",
+          "flex w-full cursor-pointer items-center gap-1 px-4 py-2.5 transition-colors hover:bg-border/40 focus-visible:outline-2 focus-visible:-outline-offset-2",
           JUSTIFY_CLASS[align],
           active && "text-foreground",
         )}
@@ -145,12 +152,33 @@ export function Column({
         <Icon
           className={cn(
             "size-3.5 shrink-0",
-            active ? "text-primary" : "text-muted-foreground/60",
+            active ? "text-primary" : "text-muted-foreground",
           )}
           aria-hidden
         />
       </button>
     </th>
+  );
+}
+
+/**
+ * ช่องชื่อที่ยาวได้ไม่จำกัด เช่นชื่อหน่วยบริการ
+ *
+ * 🔴 ใส่ max-width ที่ <td> ตรง ๆ ไม่ได้ผล เพราะตารางเป็น table-auto
+ * เบราว์เซอร์จะคำนวณความกว้างจากเนื้อหาแล้วมองข้าม max-width ของเซลล์ไป
+ * ต้องครอบด้วย <div> แล้วคุมความกว้างที่ตัวนั้นแทน
+ */
+export function NameCell({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <td className={cn("px-4 py-2.5 whitespace-normal", className)}>
+      <div className="w-full max-w-[22rem] min-w-0">{children}</div>
+    </td>
   );
 }
 
@@ -174,7 +202,8 @@ export function DataTableRow({
   return (
     <tr
       className={cn(
-        "transition-colors hover:bg-surface-muted [&>td]:whitespace-nowrap [&>td]:border-b [&>td]:border-border last:[&>td]:border-0",
+        // hover ใช้สีจาง ๆ ของ primary ไม่ใช่ surface-muted เพราะสีนั้นเป็นของหัวตารางแล้ว
+        "transition-colors hover:bg-primary/5 [&>td]:whitespace-nowrap [&>td]:border-b [&>td]:border-border last:[&>td]:border-0",
         className,
       )}
     >

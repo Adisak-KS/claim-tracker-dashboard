@@ -22,6 +22,7 @@ import {
   DataTable,
   DataTableHead,
   DataTableRow,
+  NameCell,
   type SortState,
 } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
@@ -284,7 +285,7 @@ export function ProvidersView() {
               >
                 {rows.map((row: ProviderSummary) => (
                   <DataTableRow key={row.newCode}>
-                    <td className="max-w-80 px-4 py-2.5 whitespace-normal">
+                    <NameCell>
                       <Link
                         href={`/providers/${row.newCode}`}
                         className="font-medium text-foreground transition-colors hover:text-primary hover:underline"
@@ -294,7 +295,7 @@ export function ProvidersView() {
                       <span className="block text-xs text-muted-foreground">
                         {row.shortCode ?? row.newCode} · {row.province} · เขต {row.healthZone}
                       </span>
-                    </td>
+                    </NameCell>
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {PROVIDER_TYPE_INFO[row.type].shortLabel}
                     </td>

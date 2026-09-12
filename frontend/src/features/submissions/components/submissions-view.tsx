@@ -18,6 +18,7 @@ import {
   DataTable,
   DataTableHead,
   DataTableRow,
+  NameCell,
   type SortState,
 } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
@@ -206,7 +207,7 @@ export function SubmissionsView() {
                         {row.batchId}
                       </code>
                     </td>
-                    <td className="max-w-80 px-4 py-2.5 whitespace-normal">
+                    <NameCell>
                       <Link
                         href={`/providers/${row.providerCode}`}
                         className="font-medium text-foreground transition-colors hover:text-primary hover:underline"
@@ -216,7 +217,7 @@ export function SubmissionsView() {
                       <span className="block text-xs text-muted-foreground">
                         {row.province}
                       </span>
-                    </td>
+                    </NameCell>
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {row.sourceSystem}
                     </td>

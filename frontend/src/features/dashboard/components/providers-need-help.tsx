@@ -12,6 +12,7 @@ import {
   DataTable,
   DataTableHead,
   DataTableRow,
+  NameCell,
 } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { rateTone } from "@/lib/domain/rate-tone";
@@ -37,7 +38,7 @@ export function ProvidersNeedHelp({
         <tbody>
           {rows.map((row) => (
             <DataTableRow key={row.newCode}>
-              <td className="max-w-80 px-4 py-2.5 whitespace-normal">
+              <NameCell>
                 <Link
                   href={`/providers/${row.newCode}`}
                   className="font-medium text-foreground hover:text-primary hover:underline"
@@ -48,7 +49,7 @@ export function ProvidersNeedHelp({
                   {PROVIDER_TYPE_INFO[row.type].shortLabel} · {row.province} ·{" "}
                   {row.sourceSystem} · {formatRelativeTH(row.lastSentAt)}
                 </span>
-              </td>
+              </NameCell>
               <td className="px-4 py-2.5 text-right tabular-nums">
                 {formatNumber(row.totalSent)}
               </td>
