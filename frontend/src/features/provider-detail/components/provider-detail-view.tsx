@@ -49,7 +49,7 @@ export function ProviderDetailView({ code }: { code: string }) {
     );
   }
 
-  const { provider, batches } = data;
+  const { provider } = data;
 
   return (
     <div className="space-y-4">
@@ -59,23 +59,28 @@ export function ProviderDetailView({ code }: { code: string }) {
         <h1 className="text-lg font-semibold text-foreground">
           {provider.name}
         </h1>
+        {/* รหัสครบ 3 แบบเพราะหน่วยบริการอาจอ้างคนละรหัส แต่ยุบไว้บรรทัดเดียว */}
         <p className="mt-1 text-sm text-muted-foreground">
-          {PROVIDER_TYPE_INFO[provider.type].label} · {provider.province} · เขต{" "}
-          {provider.healthZone} · ส่งผ่าน {provider.sourceSystem}
-        </p>
-        <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-muted-foreground">
-          <span>รหัสใหม่ {provider.newCode}</span>
-          {provider.legacyCode && <span>รหัสเดิม {provider.legacyCode}</span>}
-          {provider.shortCode && <span>รหัส 5 หลัก {provider.shortCode}</span>}
+          {PROVIDER_TYPE_INFO[provider.type].shortLabel} · {provider.province} ·
+          เขต {provider.healthZone} · {provider.sourceSystem} ·{" "}
+          <span
+            className="font-mono text-xs"
+            title={`รหัส 9 หลักใหม่ ${provider.newCode}${
+              provider.legacyCode ? ` · รหัส 9 หลักเดิม ${provider.legacyCode}` : ""
+            }${provider.shortCode ? ` · รหัส 5 หลัก ${provider.shortCode}` : ""}`}
+          >
+            {[provider.newCode, provider.legacyCode, provider.shortCode]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
         </p>
       </header>
 
-      <p className="animate-rise text-sm text-muted-foreground">
-        ตัวเลขทั้งหมดเป็นยอดรวมย้อนหลัง 14 วัน
-      </p>
-
       <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="ส่งทั้งหมด" value={formatNumber(provider.totalSent)} />
+        <StatCard
+          label="ส่งทั้งหมด (14 วัน)"
+          value={formatNumber(provider.totalSent)}
+        />
         <StatCard
           label="สำเร็จ"
           value={formatNumber(provider.successCount)}
@@ -100,7 +105,7 @@ export function ProviderDetailView({ code }: { code: string }) {
       <Card className="animate-rise overflow-hidden">
         <CardHeader
           title="รายการเคลม"
-          description={`ส่งเป็นชุดครั้งละไม่เกิน 10 รายการตามข้อจำกัดของ ${scheme.authorityShortName} · ${formatNumber(batches.length)} รอบใน 14 วัน · ส่งครั้งล่าสุด ${formatRelativeTH(provider.lastSentAt)}`}
+          description={`ส่งครั้งล่าสุด ${formatRelativeTH(provider.lastSentAt)}`}
         />
         <ClaimRecordsTable code={code} schemeId={scheme.id} />
       </Card>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProviderSummaries, getSubmissionBatches } from "@/mocks/generator";
+import { getProviderSummaries } from "@/mocks/generator";
 import { matchesCode } from "@/lib/domain/provider";
 
 /** ระบบเก่าส่งรหัส 5 หลัก ระบบใหม่ส่ง 9 หลักใหม่ ต้องหาเจอทั้งคู่ */
@@ -17,11 +17,6 @@ export async function GET(
     );
   }
 
-  /** ห้ามตัดจำนวน เพราะหน้าจอเอาไปนับรอบและยอดต้องตรงกับการ์ดสรุป */
-  const batches = getSubmissionBatches().filter(
-    (b) => b.providerCode === provider.newCode,
-  );
-
   await new Promise((resolve) => setTimeout(resolve, 300));
-  return NextResponse.json({ provider, batches });
+  return NextResponse.json({ provider });
 }
