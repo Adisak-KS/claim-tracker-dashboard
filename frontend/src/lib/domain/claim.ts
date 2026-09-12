@@ -34,3 +34,24 @@ export interface ClaimIssueRef {
   schemeId: SchemeId;
   code: string;
 }
+
+/**
+ * 1 batch คือการกดส่ง 1 ครั้งของหน่วยบริการ ไม่ใช่ 1 รายการผู้ป่วย
+ * หน้าจอแสดงระดับ batch เพราะผู้ใช้ติดตามเป็นรอบการส่ง ไม่ได้ไล่ดูรายคน
+ */
+export interface SubmissionBatch {
+  batchId: string;
+  schemeId: SchemeId;
+  providerCode: string;
+  providerName: string;
+  province: string;
+  sourceSystem: string;
+  submittedAt: string;
+  total: number;
+  success: number;
+  failed: number;
+  pending: number;
+  outcome: ClaimOutcome;
+  /** รหัสปัญหาที่พบมากที่สุดใน batch นี้ */
+  topIssueCode: string | null;
+}

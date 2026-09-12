@@ -13,7 +13,9 @@ import type {
   SourceSystemBreakdown,
   TrendPoint,
 } from "@/lib/domain/summary";
+import "@/lib/schemes";
 import { NHSO_ISSUES, NHSO_13F_ID } from "@/lib/schemes/nhso-13f";
+import type { ClaimOutcome, SubmissionBatch } from "@/lib/domain/claim";
 import { getScheme } from "@/lib/domain/scheme";
 import { REGISTRY } from "./moph-registry";
 
@@ -463,4 +465,71 @@ export function getDashboardSummary(
     providersNeedingHelp,
     generatedAt: new Date().toISOString(),
   };
+}
+
+/**
+ * batch ย้อนหลัง 14 วัน หน่วยบริการหนึ่งส่งได้หลายรอบต่อวัน
+ * สร้างจาก summary เดิม ตัวเลขจึงสอดคล้องกับหน้าอื่น ไม่ใช่สุ่มแยกชุด
+ */
+let batchCache: SubmissionBatch[] | null = null;
+
+const BATCH_HISTORY_DAYS = 14;
+
+export function getSubmissionBatches(): SubmissionBatch[] {
+  if (batchCache) return batchCache;
+
+  const rng = createRng(662104);
+  const now = Date.now();
+  const rows: SubmissionBatch[] = [];
+
+  for (const p of getProviderSummaries()) {
+    const batchCount = 1 + Math.floor(rng() * 4);
+
+    for (let i = 0; i < batchCount; i += 1) {
+      const total = Math.max(1, Math.round((p.totalSent / batchCount) * (0.7 + rng() * 0.6)));
+      const success = Math.round(total * (p.successRate / 100));
+      const remaining = total - success;
+      const pending = Math.round(remaining * rng() * 0.4);
+      const failed = remaining - pending;
+
+      const outcome: ClaimOutcome =
+        failed > 0 ? "failed" : pending > 0 ? "pending" : "success";
+
+      rows.push({
+        batchId: `B${String(rows.length + 1).padStart(7, "0")}`,
+        schemeId: NHSO_13F_ID,
+        providerCode: p.newCode,
+        providerName: p.name,
+        province: p.province,
+        sourceSystem: p.sourceSystem,
+        submittedAt: new Date(
+          now - rng() * BATCH_HISTORY_DAYS * 86_400_000,
+        ).toISOString(),
+        total,
+        success,
+        failed,
+        pending,
+        outcome,
+        topIssueCode: failed > 0 ? weightedIssue(rng) : null,
+      });
+    }
+  }
+
+  batchCache = rows.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  return batchCache;
+}
+
+/**
+ * อันดับหน่วยบริการที่ส่งสำเร็จมากที่สุด ผู้บริหารขอดู Top N
+ * เรียงตามจำนวนที่สำเร็จ ไม่ใช่อัตรา เพราะอัตรา 100% จากการส่ง 5 รายการไม่มีความหมาย
+ * แต่ยังแสดงอัตราคู่กันไว้ ผู้ใช้จะได้ไม่เข้าใจผิดว่ารายใหญ่คือรายที่ทำงานดีเสมอ
+ */
+export function getTypeBreakdown(): ProviderTypeBreakdown[] {
+  return buildTypeBreakdown(1);
+}
+
+export function getTopProviders(limit: number): ProviderSummary[] {
+  return [...getProviderSummaries()]
+    .sort((a, b) => b.successCount - a.successCount)
+    .slice(0, limit);
 }

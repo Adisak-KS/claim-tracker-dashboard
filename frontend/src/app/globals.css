@@ -166,6 +166,22 @@ body {
   line-height: 1.65;
 }
 
+/**
+ * โทเคนการเคลื่อนไหว ใช้ชุดเดียวทั้งระบบ
+ * ห้ามใส่ duration หรือ easing เป็นตัวเลขดิบในไฟล์ component
+ * งานการเงินต้องนิ่ง ไม่ใช้เด้งแบบ elastic เพราะดูไม่น่าเชื่อถือ
+ */
+:root {
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --duration-micro: 140ms;
+  --duration-state: 220ms;
+  --duration-panel: 280ms;
+  --duration-enter: 420ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -205,4 +221,93 @@ body {
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+/**
+ * การเคลื่อนไหวมาตรฐาน 3 ท่า ใช้ซ้ำทั้งระบบ
+ * ท่า rise ใช้กับเนื้อหาที่เพิ่งโหลดเสร็จ ท่า pop ใช้กับของที่เด้งทับ
+ */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-rise {
+  animation: rise var(--duration-enter) var(--ease-out) both;
+}
+
+.animate-pop {
+  animation: pop var(--duration-state) var(--ease-emphasis) both;
+}
+
+.animate-fade {
+  animation: fade var(--duration-panel) var(--ease-out) both;
+}
+
+/**
+ * ไล่ลำดับให้ตาไล่อ่านจากบนลงล่าง ไม่ใช่โผล่พร้อมกันทั้งจอ
+ * หยุดที่ 8 เพราะเกินกว่านั้นผู้ใช้จะรู้สึกว่าจอโหลดช้า
+ */
+.stagger > * {
+  animation: rise var(--duration-enter) var(--ease-out) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 50ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; }
+.stagger > *:nth-child(4) { animation-delay: 150ms; }
+.stagger > *:nth-child(5) { animation-delay: 200ms; }
+.stagger > *:nth-child(6) { animation-delay: 250ms; }
+.stagger > *:nth-child(7) { animation-delay: 300ms; }
+.stagger > *:nth-child(n + 8) { animation-delay: 350ms; }
+
+/** ยกการ์ดขึ้นเล็กน้อยตอน hover บอกว่ากดได้ ไม่ใช้เงาหนักเพราะจอมีการ์ดเยอะ */
+.lift {
+  transition:
+    transform var(--duration-micro) var(--ease-out),
+    box-shadow var(--duration-micro) var(--ease-out),
+    border-color var(--duration-micro) var(--ease-out);
+}
+
+.lift:hover {
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-pop,
+  .animate-fade,
+  .stagger > * {
+    animation: fade 1ms linear both;
+  }
+
+  .lift:hover {
+    transform: none;
+  }
 }

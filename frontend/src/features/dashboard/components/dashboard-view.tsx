@@ -61,7 +61,7 @@ export function DashboardView() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="stagger grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {isPending ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <KpiCardSkeleton key={i} />
@@ -107,7 +107,7 @@ export function DashboardView() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+          <div className="animate-rise grid grid-cols-1 gap-3 xl:grid-cols-3">
             <Card className="flex flex-col xl:col-span-2">
               <CardHeader
                 title="แนวโน้มการส่งเคลม"
@@ -161,7 +161,7 @@ export function DashboardView() {
             )}
           </Card>
 
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+          <div className="animate-rise grid grid-cols-1 gap-3 xl:grid-cols-3">
             <Card className="flex flex-col xl:col-span-2">
               <CardHeader
                 title="หน่วยบริการที่ต้องช่วยด่วน"

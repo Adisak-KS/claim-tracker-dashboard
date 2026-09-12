@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans_Thai, IBM_Plex_Mono } from "next/font/google";
 import { QueryProvider } from "@/lib/query-provider";
+// ลงทะเบียนประเภทการส่งเคลมให้ครบก่อนหน้าจอไหนจะเรียกใช้ ห้ามเอาออก
+import "@/lib/schemes";
 import "./globals.css";
 
 const plexThai = IBM_Plex_Sans_Thai({
