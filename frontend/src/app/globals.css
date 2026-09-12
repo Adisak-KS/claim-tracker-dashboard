@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+/* Palette มาจากโลโก้ BMS จริง (น้ำเงิน #2B62B3 · แดง #E8232A)
+   แดงสงวนไว้ให้สถานะผิดพลาดเท่านั้น ไม่ใช้ตกแต่ง ไม่งั้น error จะไม่สะดุดตา */
+:root {
+  --bms-blue-50: #eef4fc;
+  --bms-blue-100: #d8e6f8;
+  --bms-blue-200: #b3cdf0;
+  --bms-blue-300: #85ade5;
+  --bms-blue-400: #5387d6;
+  --bms-blue-500: #2b62b3;
+  --bms-blue-600: #24539a;
+  --bms-blue-700: #1e447e;
+  --bms-blue-800: #1a3a6b;
+  --bms-blue-900: #152e55;
+
+  --background: #f6f8fb;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --foreground: #0f1b2d;
+  --muted-foreground: #5b6b82;
+  --border: #dde5ee;
+  --border-strong: #c3d0e0;
+
+  --primary: var(--bms-blue-500);
+  --primary-hover: var(--bms-blue-600);
+  --on-primary: #ffffff;
+
+  /* สถานะตามที่ระบุ: เขียว=สำเร็จ แดง=ผิดพลาด เหลือง=เตือน น้ำเงินอ่อน=ทั่วไป */
+  --success: #15803d;
+  --success-surface: #e8f6ec;
+  --success-border: #a9dcb8;
+
+  --danger: #c2161d;
+  --danger-surface: #fdecec;
+  --danger-border: #f3b7b9;
+
+  --warning: #a16207;
+  --warning-surface: #fdf6e3;
+  --warning-border: #ecd08a;
+
+  --info: #1d5fa8;
+  --info-surface: #eaf3fd;
+  --info-border: #b3d3f2;
+
+  --neutral: #64748b;
+  --neutral-surface: #f1f5f9;
+  --neutral-border: #d3dce6;
+
+  --radius: 0.5rem;
+}
+
+:root[data-theme="dark"] {
+  --background: #0c1421;
+  --surface: #131d2c;
+  --surface-muted: #1b2739;
+  --foreground: #e8eef7;
+  --muted-foreground: #9aabc2;
+  --border: #27364b;
+  --border-strong: #3a4c66;
+
+  --primary: var(--bms-blue-400);
+  --primary-hover: var(--bms-blue-300);
+  --on-primary: #08111d;
+
+  --success: #4ade80;
+  --success-surface: #10291a;
+  --success-border: #1f5133;
+
+  --danger: #f87171;
+  --danger-surface: #2c1315;
+  --danger-border: #5f2427;
+
+  --warning: #fbbf24;
+  --warning-surface: #2a2110;
+  --warning-border: #57431a;
+
+  --info: #60a5fa;
+  --info-surface: #101e30;
+  --info-border: #1f3b5c;
+
+  --neutral: #94a3b8;
+  --neutral-surface: #1b2739;
+  --neutral-border: #33435c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+
+  --color-success: var(--success);
+  --color-success-surface: var(--success-surface);
+  --color-success-border: var(--success-border);
+  --color-danger: var(--danger);
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-border: var(--danger-border);
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --color-info: var(--info);
+  --color-info-surface: var(--info-surface);
+  --color-info-border: var(--info-border);
+  --color-neutral: var(--neutral);
+  --color-neutral-surface: var(--neutral-surface);
+  --color-neutral-border: var(--neutral-border);
+
+  --font-sans: var(--font-plex-thai), "IBM Plex Sans Thai", "Noto Sans Thai",
+    system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+
+  --radius-card: var(--radius);
+}
+
+* {
+  border-color: var(--border);
+}
+
+/* scrollbar ของ OS เป็นสีเทาเข้ม ตัดกับธีมจนสะดุดตา จึงวาดเองให้กลมกลืน */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid var(--background);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  /* เลข KPI/ตารางต้องเรียงตรงหลัก ไม่งั้นตัวเลขเต้นตอน refresh */
+  font-variant-numeric: tabular-nums;
+}
+
+/* ตัวเลขไทยกับ tone mark ซ้อนกันต้องมีที่หายใจ */
+:lang(th) {
+  line-height: 1.65;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-muted);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--surface) 70%, transparent),
+    transparent
+  );
+  animation: shimmer 1.6s infinite;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

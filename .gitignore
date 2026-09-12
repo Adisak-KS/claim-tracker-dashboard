@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+out/
+build/
+dist/
+
+# environment
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# editor
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# เครื่องมือทดสอบสร้างทิ้งไว้ ไม่ต้องเก็บ
+.playwright-mcp/
+*.png
+!docs/**/*.png
