@@ -12,6 +12,7 @@ import {
   SelectFilter,
   type FilterOption,
 } from "@/components/ui/filter-bar";
+import { IssueCell } from "@/components/ui/issue-cell";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import {
   Column,
@@ -19,6 +20,7 @@ import {
   DataTableHead,
   DataTableRow,
   NameCell,
+  NameLine,
   type SortState,
 } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
@@ -26,7 +28,7 @@ import { EmptyState, ErrorState } from "@/components/shared/states";
 import { useStoredState } from "@/lib/use-stored-state";
 import { CLAIM_OUTCOME_LABEL, type ClaimOutcome } from "@/lib/domain/claim";
 import "@/lib/schemes";
-import { getDefaultScheme, getIssueLabel } from "@/lib/domain/scheme";
+import { getDefaultScheme } from "@/lib/domain/scheme";
 import { formatNumber, formatDateTimeTH } from "@/lib/utils";
 import { useSubmissions } from "../hooks/use-submissions";
 
@@ -212,7 +214,9 @@ export function SubmissionsView() {
                         href={`/providers/${row.providerCode}`}
                         className="font-medium text-foreground transition-colors hover:text-primary hover:underline"
                       >
-                        {row.providerName}
+                        <NameLine title={row.providerName}>
+                          {row.providerName}
+                        </NameLine>
                       </Link>
                       <span className="block text-xs text-muted-foreground">
                         {row.province}
@@ -237,7 +241,7 @@ export function SubmissionsView() {
                       />
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
-                      {getIssueLabel(schemeId, row.topIssueCode)}
+                      <IssueCell schemeId={schemeId} code={row.topIssueCode} />
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {formatDateTimeTH(row.submittedAt)}

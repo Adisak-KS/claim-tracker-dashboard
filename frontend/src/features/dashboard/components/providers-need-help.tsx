@@ -5,7 +5,8 @@ import { ArrowRight } from "lucide-react";
 import { PROVIDER_TYPE_INFO } from "@/lib/domain/provider";
 import type { ProviderSummary } from "@/lib/domain/summary";
 import "@/lib/schemes";
-import { getIssueLabel, type SchemeId } from "@/lib/domain/scheme";
+import type { SchemeId } from "@/lib/domain/scheme";
+import { IssueCell } from "@/components/ui/issue-cell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Column,
@@ -13,6 +14,7 @@ import {
   DataTableHead,
   DataTableRow,
   NameCell,
+  NameLine,
 } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { rateTone } from "@/lib/domain/rate-tone";
@@ -43,7 +45,7 @@ export function ProvidersNeedHelp({
                   href={`/providers/${row.newCode}`}
                   className="font-medium text-foreground hover:text-primary hover:underline"
                 >
-                  {row.name}
+                  <NameLine title={row.name}>{row.name}</NameLine>
                 </Link>
                 <span className="block text-xs text-muted-foreground">
                   {PROVIDER_TYPE_INFO[row.type].shortLabel} · {row.province} ·{" "}
@@ -63,7 +65,7 @@ export function ProvidersNeedHelp({
                 />
               </td>
               <td className="px-4 py-2.5 text-muted-foreground">
-                {getIssueLabel(schemeId, row.topIssueCode)}
+                <IssueCell schemeId={schemeId} code={row.topIssueCode} />
               </td>
             </DataTableRow>
           ))}

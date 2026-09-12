@@ -16,6 +16,7 @@ import {
   SelectFilter,
   type FilterOption,
 } from "@/components/ui/filter-bar";
+import { IssueCell } from "@/components/ui/issue-cell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Column,
@@ -23,6 +24,7 @@ import {
   DataTableHead,
   DataTableRow,
   NameCell,
+  NameLine,
   type SortState,
 } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
@@ -290,7 +292,7 @@ export function ProvidersView() {
                         href={`/providers/${row.newCode}`}
                         className="font-medium text-foreground transition-colors hover:text-primary hover:underline"
                       >
-                        {row.name}
+                        <NameLine title={row.name}>{row.name}</NameLine>
                       </Link>
                       <span className="block text-xs text-muted-foreground">
                         {row.shortCode ?? row.newCode} · {row.province} · เขต {row.healthZone}
@@ -313,7 +315,7 @@ export function ProvidersView() {
                       />
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
-                      {getIssueLabel(schemeId, row.topIssueCode)}
+                      <IssueCell schemeId={schemeId} code={row.topIssueCode} />
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {formatRelativeTH(row.lastSentAt)}
