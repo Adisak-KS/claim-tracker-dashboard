@@ -18,7 +18,7 @@ import {
 import { DEFAULT_PAGE_SIZE, Pagination } from "@/components/ui/pagination";
 import { SearchFilter, SelectFilter } from "@/components/ui/filter-bar";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { RANGE_PRESETS, toApiDate, type DateRange } from "@/lib/date-range";
+import { toApiDate, type DateRange } from "@/lib/date-range";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/shared/states";
@@ -36,8 +36,6 @@ const OUTCOME_TONE: Record<ClaimOutcome, StatusTone> = {
 };
 
 /** 30 วันเพราะเจ้าหน้าที่ตามแก้ย้อนหลังได้หลายสัปดาห์ ไม่ใช่ดูแค่ของวันนี้ */
-const DEFAULT_RANGE = RANGE_PRESETS.find((p) => p.id === "last30")!;
-
 /** ใช้ dropdown ให้ตรงกับตัวกรองผลลัพธ์ในหน้า /submissions และ /providers */
 const OUTCOME_OPTIONS = [
   { value: "failed", label: "ที่ต้องแก้" },
@@ -79,14 +77,26 @@ function ResubmitCell({
  * เพราะสิ่งที่เจ้าหน้าที่ต้องการคือ "VN ไหนติดอะไร" ไม่ใช่ "รอบไหนส่งกี่รายการ"
  * รอบการส่งเป็นแค่ข้อมูลประกอบ จึงย้ายไปอยู่บรรทัดรองใต้ VN
  */
+export interface RecordsSummary {
+  total: number;
+  success: number;
+  failed: number;
+  pending: number;
+}
+
 export function ClaimRecordsTable({
   code,
   schemeId,
+  range,
+  onRangeChange,
+  onSummaryChange,
 }: {
   code: string;
   schemeId: SchemeId;
+  range: DateRange;
+  onRangeChange: (range: DateRange) => void;
+  onSummaryChange: (summary: RecordsSummary | undefined) => void;
 }) {
-  const [range, setRange] = useState<DateRange>(() => DEFAULT_RANGE.resolve());
   const [outcome, setOutcome] = useState("failed");
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
@@ -120,12 +130,18 @@ export function ClaimRecordsTable({
       pageSize,
     ],
     queryFn: () =>
-      apiGet<Paginated<ClaimRecordDetail>>(
+      apiGet<Paginated<ClaimRecordDetail> & { summary: RecordsSummary }>(
         `/api/providers/${code}/records`,
         { from, to, outcome, q: debouncedQ, page, pageSize },
       ),
     placeholderData: keepPreviousData,
   });
+
+  /** ส่งยอดของช่วงนี้ขึ้นไปให้การ์ดด้านบน ไม่งั้นการ์ดกับตารางจะบอกเลขคนละชุด */
+  const summary = data?.summary;
+  useEffect(() => {
+    onSummaryChange(summary);
+  }, [summary, onSummaryChange]);
 
   function changeOutcome(next: string) {
     setOutcome(next);
@@ -133,7 +149,7 @@ export function ClaimRecordsTable({
   }
 
   function changeRange(next: DateRange) {
-    setRange(next);
+    onRangeChange(next);
     setPage(1);
   }
 

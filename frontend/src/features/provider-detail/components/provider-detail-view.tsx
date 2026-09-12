@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { ArrowLeft, Building2 } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState, ErrorState } from "@/components/shared/states";
 import { getDefaultScheme } from "@/lib/domain/scheme";
-import { ClaimRecordsTable } from "./claim-records-table";
+import { RANGE_PRESETS, type DateRange } from "@/lib/date-range";
+import {
+  ClaimRecordsTable,
+  type RecordsSummary,
+} from "./claim-records-table";
 import "@/lib/schemes";
 import { PROVIDER_TYPE_INFO } from "@/lib/domain/provider";
 import { rateTone } from "@/lib/domain/rate-tone";
@@ -15,9 +20,15 @@ import { ApiError } from "@/lib/api/client";
 import { formatNumber, formatPercent, formatRelativeTH } from "@/lib/utils";
 import { useProviderDetail } from "../hooks/use-provider-detail";
 
+/** 30 วันเพราะเจ้าหน้าที่ตามแก้ย้อนหลังได้หลายสัปดาห์ ไม่ใช่ดูแค่ของวันนี้ */
+const DEFAULT_RANGE = RANGE_PRESETS.find((p) => p.id === "last30")!;
+
 export function ProviderDetailView({ code }: { code: string }) {
   const { data, isPending, isError, error, refetch } = useProviderDetail(code);
   const scheme = getDefaultScheme();
+  const [range, setRange] = useState<DateRange>(() => DEFAULT_RANGE.resolve());
+  /** ยอดมาจากตารางเพราะต้องเป็นช่วงวันที่เดียวกัน ไม่งั้นเลขบนกับล่างขัดกัน */
+  const [summary, setSummary] = useState<RecordsSummary | undefined>();
 
   if (isPending) return <ProviderDetailSkeleton />;
 
@@ -79,25 +90,29 @@ export function ProviderDetailView({ code }: { code: string }) {
       <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           label="ส่งทั้งหมด"
-          value={formatNumber(provider.totalSent)}
+          value={summary ? formatNumber(summary.total) : "..."}
         />
         <StatCard
           label="สำเร็จ"
-          value={formatNumber(provider.successCount)}
+          value={summary ? formatNumber(summary.success) : "..."}
           className="text-success"
         />
         <StatCard
           label="ไม่สำเร็จ"
-          value={formatNumber(provider.failedCount)}
+          value={summary ? formatNumber(summary.failed) : "..."}
           className="text-danger"
         />
         <Card className="p-4">
           <p className="text-xs text-muted-foreground">อัตราสำเร็จ</p>
           <div className="mt-1.5">
-            <StatusBadge
-              tone={rateTone(provider.successRate)}
-              label={formatPercent(provider.successRate)}
-            />
+            {summary && summary.total > 0 ? (
+              <StatusBadge
+                tone={rateTone((summary.success / summary.total) * 100)}
+                label={formatPercent((summary.success / summary.total) * 100)}
+              />
+            ) : (
+              <span className="text-sm text-muted-foreground">...</span>
+            )}
           </div>
         </Card>
       </div>
@@ -107,7 +122,13 @@ export function ProviderDetailView({ code }: { code: string }) {
           title="รายการเคลม"
           description={`ส่งครั้งล่าสุด ${formatRelativeTH(provider.lastSentAt)}`}
         />
-        <ClaimRecordsTable code={code} schemeId={scheme.id} />
+        <ClaimRecordsTable
+          code={code}
+          schemeId={scheme.id}
+          range={range}
+          onRangeChange={setRange}
+          onSummaryChange={setSummary}
+        />
       </Card>
     </div>
   );

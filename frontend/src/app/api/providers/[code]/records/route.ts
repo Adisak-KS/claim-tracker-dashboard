@@ -76,8 +76,21 @@ export async function GET(
 
   rows.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
 
+  /**
+   * ส่งยอดสรุปของช่วงนี้มาด้วย เพราะการ์ดด้านบนต้องขยับตามช่วงวันที่เดียวกัน
+   * ถ้าการ์ดใช้ยอดรวมทั้งหมดแต่ตารางกรองตามช่วง ผู้ใช้จะเห็นเลขขัดกันเอง
+   */
+  const all = batches.flatMap((batch) => getClaimRecords(batch.batchId));
+  const summary = {
+    total: all.length,
+    success: all.filter((r) => r.outcome === "success").length,
+    failed: all.filter((r) => r.outcome === "failed").length,
+    pending: all.filter((r) => r.outcome === "pending").length,
+  };
+
   const start = (page - 1) * pageSize;
-  const body: Paginated<ProviderClaimRecord> = {
+  const body: Paginated<ProviderClaimRecord> & { summary: typeof summary } = {
+    summary,
     rows: rows.slice(start, start + pageSize),
     total: rows.length,
     page,
