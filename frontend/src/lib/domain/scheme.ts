@@ -86,7 +86,17 @@ export function getIssue(
 
 export function getIssueLabel(schemeId: SchemeId, code: string | null): string {
   if (!code) return "ไม่มี";
-  return getIssue(schemeId, code)?.label ?? code;
+
+  const issue = getIssue(schemeId, code);
+  if (issue) return issue.label;
+
+  // เคยหลุดมาแล้ว 2 รอบ: ลืม import "@/lib/schemes" แล้วหน้าจอโชว์รหัสดิบเงียบ ๆ
+  if (process.env.NODE_ENV !== "production" && registry.size === 0) {
+    console.error(
+      'ยังไม่ได้ลงทะเบียนประเภทการส่งเคลม ให้เพิ่ม import "@/lib/schemes" ที่หัวไฟล์ที่เรียกใช้',
+    );
+  }
+  return code;
 }
 
 export function getStatus(

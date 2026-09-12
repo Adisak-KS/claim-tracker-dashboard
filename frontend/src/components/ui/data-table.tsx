@@ -51,15 +51,22 @@ export function DataTable({ columns, children, className }: DataTableProps) {
 
 /**
  * หัวตารางลอยค้างตอนเลื่อน
- * ต้องเว้น 3.5rem ให้พ้น Topbar ที่สูง h-14 ไม่งั้นจะมุดหายไปข้างใต้
- * ใส่พื้นหลังทึบเสมอ ไม่งั้นแถวข้อมูลจะวิ่งทะลุขึ้นมาซ้อน
+ *
+ * 🔴 พื้นหลังกับ sticky ต้องอยู่ที่ <th> ไม่ใช่ <thead>
+ * เบราว์เซอร์ไม่ทำ sticky ให้ <thead> ตรง ๆ มันไปเกาะที่เซลล์แต่ละตัว
+ * ถ้าใส่ bg ไว้ที่ <thead> พื้นหลังจะไม่ลอยตาม แถวข้อมูลจะทะลุขึ้นมาซ้อนหัวตาราง
+ *
+ * เว้น 3.5rem ให้พ้น Topbar ที่สูง h-14 ไม่งั้นหัวตารางจะมุดหายไปข้างใต้
+ * เส้นคั่นใช้ box-shadow ไม่ใช่ border เพราะ border ของ sticky cell
+ * จะหลุดหายตอนเลื่อนในบางเบราว์เซอร์
  */
+const STICKY_HEAD_CELL =
+  "sticky top-14 z-20 bg-surface shadow-[inset_0_-1px_0_var(--border)]";
+
 export function DataTableHead({ children }: { children: ReactNode }) {
   return (
-    <thead className="sticky top-14 z-10 bg-surface">
-      <tr className="border-b border-border text-left text-xs text-muted-foreground">
-        {children}
-      </tr>
+    <thead>
+      <tr className="text-left text-xs text-muted-foreground">{children}</tr>
     </thead>
   );
 }
@@ -95,6 +102,7 @@ export function Column({
   className,
 }: ColumnProps) {
   const base = cn(
+    STICKY_HEAD_CELL,
     "whitespace-nowrap px-4 py-2.5 font-medium",
     ALIGN_CLASS[align],
     className,
@@ -113,7 +121,7 @@ export function Column({
 
   return (
     <th
-      className={cn(base, "p-0")}
+      className={cn(base, "px-0 py-0")}
       aria-sort={
         active
           ? sort.direction === "asc"

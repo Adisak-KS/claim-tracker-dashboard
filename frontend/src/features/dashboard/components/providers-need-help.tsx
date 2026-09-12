@@ -4,18 +4,13 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PROVIDER_TYPE_INFO } from "@/lib/domain/provider";
 import type { ProviderSummary } from "@/lib/domain/summary";
-import type { SchemeId } from "@/lib/domain/scheme";
-import { getIssueLabel } from "@/lib/domain/scheme";
+import "@/lib/schemes";
+import { getIssueLabel, type SchemeId } from "@/lib/domain/scheme";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Column, DataTable, DataTableHead } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
+import { rateTone } from "@/lib/domain/rate-tone";
 import { formatNumber, formatPercent, formatRelativeTH } from "@/lib/utils";
-
-/** ต่ำกว่า 80 คือต้องเข้าไปช่วยจริง ระหว่าง 80 ถึง 95 คือเฝ้าระวัง */
-function rateTone(rate: number) {
-  if (rate >= 95) return "success" as const;
-  if (rate >= 80) return "warning" as const;
-  return "danger" as const;
-}
 
 export function ProvidersNeedHelp({
   rows,
@@ -25,20 +20,18 @@ export function ProvidersNeedHelp({
   schemeId: SchemeId;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[58rem] border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-xs text-muted-foreground">
-            <th className="px-4 py-2.5 font-medium">หน่วยบริการ</th>
-            <th className="px-4 py-2.5 font-medium">ประเภท</th>
-            <th className="px-4 py-2.5 font-medium">ระบบ</th>
-            <th className="px-4 py-2.5 text-right font-medium">ส่งทั้งหมด</th>
-            <th className="px-4 py-2.5 text-right font-medium">ไม่สำเร็จ</th>
-            <th className="px-4 py-2.5 text-center font-medium">อัตราสำเร็จ</th>
-            <th className="px-4 py-2.5 font-medium">ปัญหาหลัก</th>
-            <th className="px-4 py-2.5 font-medium">ส่งล่าสุด</th>
-          </tr>
-        </thead>
+    <div>
+      <DataTable columns={8}>
+        <DataTableHead>
+          <Column>หน่วยบริการ</Column>
+          <Column>ประเภท</Column>
+          <Column>ระบบ</Column>
+          <Column align="right">ส่งทั้งหมด</Column>
+          <Column align="right">ไม่สำเร็จ</Column>
+          <Column align="center">อัตราสำเร็จ</Column>
+          <Column>ปัญหาหลัก</Column>
+          <Column>ส่งล่าสุด</Column>
+        </DataTableHead>
         <tbody>
           {rows.map((row) => (
             <tr
@@ -83,7 +76,7 @@ export function ProvidersNeedHelp({
             </tr>
           ))}
         </tbody>
-      </table>
+      </DataTable>
 
       <Link
         href="/providers?status=problem"

@@ -3,6 +3,8 @@
 import { TriangleAlert } from "lucide-react";
 import type { SourceSystemBreakdown } from "@/lib/domain/summary";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Column, DataTable, DataTableHead } from "@/components/ui/data-table";
+import { rateBarClass, rateTextClass } from "@/lib/domain/rate-tone";
 import { cn, formatCompact, formatNumber, formatPercent } from "@/lib/utils";
 
 /**
@@ -11,18 +13,6 @@ import { cn, formatCompact, formatNumber, formatPercent } from "@/lib/utils";
  * ต้องส่งทีม dev ไปดู ไม่ใช่ส่งทีมฝึกอบรมไปสอนหน่วยบริการ
  */
 const ANOMALY_THRESHOLD = -5;
-
-function rateTone(rate: number) {
-  if (rate >= 95) return "text-success";
-  if (rate >= 80) return "text-warning";
-  return "text-danger";
-}
-
-function barTone(rate: number) {
-  if (rate >= 95) return "bg-success";
-  if (rate >= 80) return "bg-warning";
-  return "bg-danger";
-}
 
 export function SourceSystemBreakdownTable({
   rows,
@@ -43,20 +33,15 @@ export function SourceSystemBreakdownTable({
         </p>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[42rem] border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="px-4 py-2.5 font-medium">ระบบต้นทาง</th>
-              <th className="px-4 py-2.5 text-right font-medium">หน่วยบริการ</th>
-              <th className="px-4 py-2.5 text-right font-medium">ส่งทั้งหมด</th>
-              <th className="px-4 py-2.5 text-right font-medium">ไม่สำเร็จ</th>
-              <th className="px-4 py-2.5 font-medium">อัตราสำเร็จ</th>
-              <th className="px-4 py-2.5 text-right font-medium">
-                เทียบค่าเฉลี่ย
-              </th>
-            </tr>
-          </thead>
+      <DataTable columns={6}>
+          <DataTableHead>
+            <Column>ระบบต้นทาง</Column>
+            <Column align="right">หน่วยบริการ</Column>
+            <Column align="right">ส่งทั้งหมด</Column>
+            <Column align="right">ไม่สำเร็จ</Column>
+            <Column>อัตราสำเร็จ</Column>
+            <Column align="right">เทียบค่าเฉลี่ย</Column>
+          </DataTableHead>
           <tbody>
             {rows.map((row) => {
               const anomaly = row.rateVsAverage <= ANOMALY_THRESHOLD;
@@ -95,7 +80,7 @@ export function SourceSystemBreakdownTable({
                         <span
                           className={cn(
                             "block h-full rounded-full",
-                            barTone(row.successRate),
+                            rateBarClass(row.successRate),
                           )}
                           style={{ width: `${row.successRate}%` }}
                         />
@@ -103,7 +88,7 @@ export function SourceSystemBreakdownTable({
                       <span
                         className={cn(
                           "text-sm font-semibold tabular-nums",
-                          rateTone(row.successRate),
+                          rateTextClass(row.successRate),
                         )}
                       >
                         {formatPercent(row.successRate)}
@@ -123,8 +108,7 @@ export function SourceSystemBreakdownTable({
               );
             })}
           </tbody>
-        </table>
-      </div>
+      </DataTable>
     </div>
   );
 }

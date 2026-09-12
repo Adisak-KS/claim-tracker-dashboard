@@ -3,23 +3,14 @@
 import { AlertTriangle } from "lucide-react";
 import type { ProviderTypeBreakdown } from "@/lib/domain/summary";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Column, DataTable, DataTableHead } from "@/components/ui/data-table";
+import { rateBarClass, rateTextClass } from "@/lib/domain/rate-tone";
 import { cn, formatCompact, formatNumber, formatPercent } from "@/lib/utils";
 
 /**
  * แยกตามประเภทหน่วยบริการ เพราะขนาดต่างกันหลักร้อยเท่า
  * ถ้าดูรวมกัน คลินิกที่พังทั้งหมดจะถูกกลบด้วย รพ.ศูนย์ที่ส่งเยอะกว่ามาก
  */
-function rateTone(rate: number) {
-  if (rate >= 95) return "text-success";
-  if (rate >= 80) return "text-warning";
-  return "text-danger";
-}
-
-function barTone(rate: number) {
-  if (rate >= 95) return "bg-success";
-  if (rate >= 80) return "bg-warning";
-  return "bg-danger";
-}
 
 export function ProviderTypeBreakdownTable({
   rows,
@@ -27,18 +18,15 @@ export function ProviderTypeBreakdownTable({
   rows: ProviderTypeBreakdown[];
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[44rem] border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-xs text-muted-foreground">
-            <th className="px-4 py-2.5 font-medium">ประเภทหน่วยบริการ</th>
-            <th className="px-4 py-2.5 text-right font-medium">จำนวนแห่ง</th>
-            <th className="px-4 py-2.5 text-right font-medium">ส่งทั้งหมด</th>
-            <th className="px-4 py-2.5 text-right font-medium">ไม่สำเร็จ</th>
-            <th className="px-4 py-2.5 font-medium">อัตราสำเร็จ</th>
-            <th className="px-4 py-2.5 text-right font-medium">ต้องช่วย</th>
-          </tr>
-        </thead>
+    <DataTable columns={6}>
+        <DataTableHead>
+          <Column>ประเภทหน่วยบริการ</Column>
+          <Column align="right">จำนวนแห่ง</Column>
+          <Column align="right">ส่งทั้งหมด</Column>
+          <Column align="right">ไม่สำเร็จ</Column>
+          <Column>อัตราสำเร็จ</Column>
+          <Column align="right">ต้องช่วย</Column>
+        </DataTableHead>
         <tbody>
           {rows.map((row) => (
             <tr
@@ -63,7 +51,7 @@ export function ProviderTypeBreakdownTable({
                     <span
                       className={cn(
                         "block h-full rounded-full",
-                        barTone(row.successRate),
+                        rateBarClass(row.successRate),
                       )}
                       style={{ width: `${row.successRate}%` }}
                     />
@@ -71,7 +59,7 @@ export function ProviderTypeBreakdownTable({
                   <span
                     className={cn(
                       "text-sm font-semibold tabular-nums",
-                      rateTone(row.successRate),
+                      rateTextClass(row.successRate),
                     )}
                   >
                     {formatPercent(row.successRate)}
@@ -91,8 +79,7 @@ export function ProviderTypeBreakdownTable({
             </tr>
           ))}
         </tbody>
-      </table>
-    </div>
+    </DataTable>
   );
 }
 
