@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { SearchX } from "lucide-react";
+import { ChevronDown, SearchX } from "lucide-react";
 import { apiGet } from "@/lib/api/client";
-import { AuthorityMessage } from "@/components/ui/authority-message";
+import {
+  AuthorityMessage,
+  AuthorityMessageInline,
+} from "@/components/ui/authority-message";
 import {
   Column,
   DataTable,
@@ -62,6 +65,7 @@ export function ClaimRecordsTable({
   const [outcome, setOutcome] = useState("failed");
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useStoredState(
     "claimRecords.pageSize",
@@ -162,8 +166,14 @@ export function ClaimRecordsTable({
               <Column>ข้อความที่ตอบกลับ</Column>
             </DataTableHead>
             <tbody>
-              {data.rows.map((record) => (
-                <DataTableRow key={`${record.batchId}-${record.seq}`}>
+              {data.rows.map((record) => {
+                const rowKey = `${record.batchId}-${record.seq}`;
+                const isOpen = expanded === rowKey;
+                const hasDetail = Boolean(record.responses?.length);
+
+                return (
+                  <Fragment key={rowKey}>
+                <DataTableRow>
                   <td className="px-4 py-2.5">
                     <span className="block font-mono text-sm text-foreground">
                       {record.vn}
@@ -181,16 +191,30 @@ export function ClaimRecordsTable({
                       label={CLAIM_OUTCOME_LABEL[record.outcome]}
                     />
                   </td>
-                  <td className="px-4 py-2.5 whitespace-normal">
-                    {record.responses?.length ? (
-                      <div className="space-y-2">
-                        {record.responses.map((response) => (
-                          <AuthorityMessage
-                            key={response.code}
-                            response={response}
-                          />
-                        ))}
-                      </div>
+                  <td className="max-w-md px-4 py-2.5 whitespace-normal">
+                    {hasDetail ? (
+                      <button
+                        type="button"
+                        onClick={() => setExpanded(isOpen ? null : rowKey)}
+                        aria-expanded={isOpen}
+                        className="flex w-full cursor-pointer items-start gap-2 text-left"
+                      >
+                        <span className="min-w-0 flex-1 space-y-1.5">
+                          {record.responses?.map((response) => (
+                            <AuthorityMessageInline
+                              key={response.code}
+                              response={response}
+                            />
+                          ))}
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            "mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                            isOpen && "rotate-180",
+                          )}
+                          aria-hidden
+                        />
+                      </button>
                     ) : (
                       <span className="text-sm text-muted-foreground">
                         {getStatusLabel(schemeId, record.statusCode)}
@@ -198,7 +222,24 @@ export function ClaimRecordsTable({
                     )}
                   </td>
                 </DataTableRow>
-              ))}
+
+                {isOpen && (
+                  <tr className="animate-fade">
+                    <td colSpan={4} className="bg-surface-muted/40 px-4 py-3">
+                      <div className="space-y-2">
+                        {record.responses?.map((response) => (
+                          <AuthorityMessage
+                            key={response.code}
+                            response={response}
+                          />
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </DataTable>
 

@@ -77,3 +77,47 @@ function AllowClaimBadge({ value }: { value: "Y" | "N" | null }) {
     </span>
   );
 }
+
+/**
+ * แบบย่อสำหรับใช้ในตารางที่มีหลายสิบแถว
+ *
+ * ตารางต้องสแกนเร็ว จึงเหลือบรรทัดเดียว ไม่มีกรอบไม่มีพื้นหลัง
+ * ป้าย "แก้แล้วส่งใหม่ได้" ตัดออกเพราะซ้ำเกือบทุกแถวจนตาชิน
+ * เหลือเฉพาะกรณีส่งใหม่ไม่ได้ ซึ่งเป็นตัวที่ต้องสังเกตจริง
+ *
+ * วิธีแก้ไม่แสดงตรงนี้ ให้ชี้เมาส์ดูใน title หรือเปิดรายละเอียดเอา
+ */
+export function AuthorityMessageInline({
+  response,
+}: {
+  response: AuthorityResponse;
+}) {
+  const blocked = response.allowClaim === "N";
+
+  return (
+    <span className="flex items-start gap-2">
+      <code
+        className={cn(
+          "mt-px shrink-0 rounded px-1.5 py-0.5 font-mono text-xs",
+          blocked
+            ? "bg-danger-surface text-danger"
+            : "bg-surface-muted text-muted-foreground",
+        )}
+      >
+        {response.code}
+      </code>
+
+      <span className="min-w-0">
+        <span className="line-clamp-2 break-words text-sm text-foreground">
+          {response.message}
+        </span>
+        {blocked && (
+          <span className="mt-0.5 flex items-center gap-1 text-xs font-medium text-danger">
+            <CircleSlash className="size-3 shrink-0" aria-hidden />
+            ส่งใหม่ไม่ได้ ต้องอุทธรณ์
+          </span>
+        )}
+      </span>
+    </span>
+  );
+}
