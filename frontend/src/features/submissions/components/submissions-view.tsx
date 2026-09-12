@@ -206,7 +206,7 @@ export function SubmissionsView() {
                         {row.batchId}
                       </code>
                     </td>
-                    <td className="px-4 py-2.5">
+                    <td className="max-w-80 px-4 py-2.5 whitespace-normal">
                       <Link
                         href={`/providers/${row.providerCode}`}
                         className="font-medium text-foreground transition-colors hover:text-primary hover:underline"

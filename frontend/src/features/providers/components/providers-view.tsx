@@ -284,7 +284,7 @@ export function ProvidersView() {
               >
                 {rows.map((row: ProviderSummary) => (
                   <DataTableRow key={row.newCode}>
-                    <td className="px-4 py-2.5">
+                    <td className="max-w-80 px-4 py-2.5 whitespace-normal">
                       <Link
                         href={`/providers/${row.newCode}`}
                         className="font-medium text-foreground transition-colors hover:text-primary hover:underline"

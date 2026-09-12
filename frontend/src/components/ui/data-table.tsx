@@ -52,16 +52,18 @@ export function DataTable({ columns, children, className }: DataTableProps) {
 /**
  * หัวตารางลอยค้างตอนเลื่อน มี 3 กับดักที่ต้องทำครบทั้งหมด ขาดข้อเดียวก็พัง
  *
- * 1. 🔴 ตารางต้องเป็น border-separate ไม่ใช่ border-collapse
+ * 1. 🔴 top ต้องเป็น 0 ไม่ใช่ 14
+ *    กล่องนอกมี overflow-x-auto ซึ่งทำให้มันกลายเป็น scroll container
+ *    หัวตารางจึงเกาะกับกล่องนั้น ไม่ใช่เกาะกับจอ ถ้าใส่ top-14
+ *    หัวตารางจะถูกดันลงมา 3.5rem แล้วเปิดช่องโหว่ให้แถวข้อมูลโผล่ขึ้นมาเห็น
+ * 2. ตารางต้องเป็น border-separate ไม่ใช่ border-collapse
  *    ถ้า collapse เบราว์เซอร์จะไม่วาดพื้นหลังของเซลล์ที่ sticky ให้
- *    แถวข้อมูลจะมองทะลุขึ้นมาเห็นเป็นตัวหนังสือจาง ๆ ซ้อนหัวตาราง
  *    (border-separate ทำให้ต้องวาดเส้นคั่นด้วย box-shadow แทน border)
- * 2. sticky กับพื้นหลังต้องอยู่ที่ <th> ไม่ใช่ <thead>
+ * 3. sticky กับพื้นหลังต้องอยู่ที่ <th> ไม่ใช่ <thead>
  *    เบราว์เซอร์ไม่ทำ sticky ให้ <thead> ตรง ๆ มันเกาะที่เซลล์แต่ละตัว
- * 3. เว้น 3.5rem ให้พ้น Topbar ที่สูง h-14 ไม่งั้นหัวตารางจะมุดหายไปข้างใต้
  */
 const STICKY_HEAD_CELL =
-  "sticky top-14 z-20 bg-surface shadow-[inset_0_-1px_0_var(--border)]";
+  "sticky top-0 z-20 bg-surface shadow-[inset_0_-1px_0_var(--border)]";
 
 export function DataTableHead({ children }: { children: ReactNode }) {
   return (
@@ -154,8 +156,13 @@ export function Column({
 
 /**
  * แถวข้อมูล ใช้แทน <tr> ธรรมดา
+ *
  * ตารางเป็น border-separate เส้นคั่นจึงต้องวาดที่ <td> ไม่ใช่ที่ <tr>
  * เพราะ border ของ <tr> จะไม่ถูกวาดเมื่อ border-separate
+ *
+ * เซลล์ไม่ตัดบรรทัดเป็นค่าเริ่มต้น เพราะข้อความสั้น ๆ อย่าง "3 ชั่วโมงที่แล้ว"
+ * ถ้าตัดบรรทัดจะอ่านยากและทำให้ความสูงแต่ละแถวไม่เท่ากัน
+ * เซลล์ไหนที่ตั้งใจให้ตัดบรรทัดได้ (เช่นชื่อหน่วยบริการยาว ๆ) ให้ใส่ whitespace-normal เอง
  */
 export function DataTableRow({
   children,
@@ -167,7 +174,7 @@ export function DataTableRow({
   return (
     <tr
       className={cn(
-        "transition-colors hover:bg-surface-muted [&>td]:border-b [&>td]:border-border last:[&>td]:border-0",
+        "transition-colors hover:bg-surface-muted [&>td]:whitespace-nowrap [&>td]:border-b [&>td]:border-border last:[&>td]:border-0",
         className,
       )}
     >

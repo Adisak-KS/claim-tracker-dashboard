@@ -300,10 +300,14 @@ function buildMostImproved(scale: number): ProviderMovement[] {
   return getProviderSummaries()
     .filter((p) => p.totalSent >= MIN_VOLUME_FOR_MOVEMENT)
     .map((p) => {
-      // จำลองอัตราของช่วงก่อนหน้า ที่ดีขึ้นจริงจะมีช่องว่างกว้าง
+      /**
+       * จำลองอัตราของช่วงก่อนหน้า ที่ดีขึ้นจริงจะมีช่องว่างกว้าง
+       * คิดเป็นสัดส่วนของอัตราปัจจุบัน ไม่ใช่ลบค่าคงที่แล้วตัดที่พื้น
+       * เพราะถ้าตัดพื้น รายที่อัตราสูงจะชนเพดานเดียวกันหมดแล้วได้ส่วนต่างเท่ากันทุกแถว
+       */
       const improved = rng() < 0.18;
       const previousRate = improved
-        ? Math.max(35, p.successRate - (12 + rng() * 30))
+        ? p.successRate * (0.42 + rng() * 0.34)
         : Math.max(20, Math.min(99.9, p.successRate + (rng() * 16 - 8)));
 
       return {

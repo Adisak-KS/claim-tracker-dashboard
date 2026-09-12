@@ -26,21 +26,18 @@ export function ProvidersNeedHelp({
 }) {
   return (
     <div>
-      <DataTable columns={8}>
+      <DataTable columns={5}>
         <DataTableHead>
           <Column>หน่วยบริการ</Column>
-          <Column>ประเภท</Column>
-          <Column>ระบบ</Column>
           <Column align="right">ส่งทั้งหมด</Column>
           <Column align="right">ไม่สำเร็จ</Column>
           <Column align="center">อัตราสำเร็จ</Column>
           <Column>ปัญหาหลัก</Column>
-          <Column>ส่งล่าสุด</Column>
         </DataTableHead>
         <tbody>
           {rows.map((row) => (
             <DataTableRow key={row.newCode}>
-              <td className="px-4 py-2.5">
+              <td className="max-w-80 px-4 py-2.5 whitespace-normal">
                 <Link
                   href={`/providers/${row.newCode}`}
                   className="font-medium text-foreground hover:text-primary hover:underline"
@@ -48,14 +45,9 @@ export function ProvidersNeedHelp({
                   {row.name}
                 </Link>
                 <span className="block text-xs text-muted-foreground">
-                  {row.shortCode ?? row.newCode} · {row.province} · เขต {row.healthZone}
+                  {PROVIDER_TYPE_INFO[row.type].shortLabel} · {row.province} ·{" "}
+                  {row.sourceSystem} · {formatRelativeTH(row.lastSentAt)}
                 </span>
-              </td>
-              <td className="px-4 py-2.5 text-muted-foreground">
-                {PROVIDER_TYPE_INFO[row.type].shortLabel}
-              </td>
-              <td className="px-4 py-2.5 text-muted-foreground">
-                {row.sourceSystem}
               </td>
               <td className="px-4 py-2.5 text-right tabular-nums">
                 {formatNumber(row.totalSent)}
@@ -71,9 +63,6 @@ export function ProvidersNeedHelp({
               </td>
               <td className="px-4 py-2.5 text-muted-foreground">
                 {getIssueLabel(schemeId, row.topIssueCode)}
-              </td>
-              <td className="px-4 py-2.5 text-muted-foreground">
-                {formatRelativeTH(row.lastSentAt)}
               </td>
             </DataTableRow>
           ))}
