@@ -1,12 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Building2, MessageSquareWarning } from "lucide-react";
+import { ArrowLeft, Building2, ListTree, MessageSquareWarning } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { EmptyState, ErrorState } from "@/components/shared/states";
-import { AuthorityMessage } from "@/components/ui/authority-message";
+import {
+  Column,
+  DataTable,
+  DataTableHead,
+  DataTableRow,
+} from "@/components/ui/data-table";
+import { getDefaultScheme } from "@/lib/domain/scheme";
+import { BatchRecordsDialog } from "./batch-records-dialog";
 import "@/lib/schemes";
 import { PROVIDER_TYPE_INFO } from "@/lib/domain/provider";
 import { CLAIM_OUTCOME_LABEL, type ClaimOutcome } from "@/lib/domain/claim";
@@ -29,6 +37,8 @@ const OUTCOME_TONE: Record<ClaimOutcome, StatusTone> = {
 
 export function ProviderDetailView({ code }: { code: string }) {
   const { data, isPending, isError, error, refetch } = useProviderDetail(code);
+  const [openBatch, setOpenBatch] = useState<string | null>(null);
+  const schemeId = getDefaultScheme().id;
 
   if (isPending) return <ProviderDetailSkeleton />;
 
@@ -81,6 +91,10 @@ export function ProviderDetailView({ code }: { code: string }) {
         </p>
       </header>
 
+      <p className="animate-rise text-sm text-muted-foreground">
+        ตัวเลขทั้งหมดเป็นยอดรวมย้อนหลัง 14 วัน
+      </p>
+
       <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="ส่งทั้งหมด" value={formatNumber(provider.totalSent)} />
         <StatCard
@@ -107,7 +121,7 @@ export function ProviderDetailView({ code }: { code: string }) {
       <Card className="animate-rise overflow-hidden">
         <CardHeader
           title="รอบการส่งล่าสุด"
-          description={`ส่งครั้งล่าสุด ${formatRelativeTH(provider.lastSentAt)} · แสดงสูงสุด 20 รอบ`}
+          description={`${formatNumber(batches.length)} รอบ · กดที่รหัสรอบเพื่อดูรายการรายตัวและข้อความที่ตอบกลับ · ส่งครั้งล่าสุด ${formatRelativeTH(provider.lastSentAt)}`}
         />
 
         {batches.length === 0 ? (
@@ -117,47 +131,61 @@ export function ProviderDetailView({ code }: { code: string }) {
             hint="หน่วยบริการนี้ยังไม่ได้ส่งเคลมเข้ามาในช่วง 14 วันที่ผ่านมา"
           />
         ) : (
-          <ul className="divide-y divide-border">
-            {batches.map((batch) => (
-              <li key={batch.batchId} className="px-4 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="flex items-center gap-2">
-                    <code className="font-mono text-xs text-muted-foreground">
+          <DataTable columns={6}>
+            <DataTableHead>
+              <Column>รอบการส่ง</Column>
+              <Column>เวลาที่ส่ง</Column>
+              <Column align="right">ทั้งหมด</Column>
+              <Column align="right">สำเร็จ</Column>
+              <Column align="right">ไม่สำเร็จ</Column>
+              <Column align="center">ผลลัพธ์</Column>
+            </DataTableHead>
+            <tbody>
+              {batches.map((batch) => (
+                <DataTableRow key={batch.batchId}>
+                  <td className="px-4 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setOpenBatch(batch.batchId)}
+                      className="inline-flex cursor-pointer items-center gap-1.5 font-mono text-xs text-primary transition-colors hover:underline"
+                      aria-label={`ดูรายการในรอบ ${batch.batchId}`}
+                    >
+                      <ListTree className="size-3.5" aria-hidden />
                       {batch.batchId}
-                    </code>
+                    </button>
+                  </td>
+                  <td className="px-4 py-2.5 text-muted-foreground">
+                    {formatDateTimeTH(batch.submittedAt)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">
+                    {formatNumber(batch.total)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-success">
+                    {formatNumber(batch.success)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-medium tabular-nums text-danger">
+                    {formatNumber(batch.failed)}
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
                     <StatusBadge
                       tone={OUTCOME_TONE[batch.outcome]}
                       label={CLAIM_OUTCOME_LABEL[batch.outcome]}
                     />
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDateTimeTH(batch.submittedAt)}
-                  </span>
-                </div>
-
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                  ส่ง {formatNumber(batch.total)} รายการ · สำเร็จ{" "}
-                  <span className="text-success">
-                    {formatNumber(batch.success)}
-                  </span>{" "}
-                  · ไม่สำเร็จ{" "}
-                  <span className="text-danger">
-                    {formatNumber(batch.failed)}
-                  </span>
-                </p>
-
-                {batch.authorityResponses?.map((response) => (
-                  <AuthorityMessage
-                    key={response.code}
-                    response={response}
-                    className="mt-2"
-                  />
-                ))}
-              </li>
-            ))}
-          </ul>
+                  </td>
+                </DataTableRow>
+              ))}
+            </tbody>
+          </DataTable>
         )}
       </Card>
+
+      {openBatch && (
+        <BatchRecordsDialog
+          batchId={openBatch}
+          schemeId={schemeId}
+          onClose={() => setOpenBatch(null)}
+        />
+      )}
     </div>
   );
 }

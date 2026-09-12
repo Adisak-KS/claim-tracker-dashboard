@@ -18,6 +18,7 @@ import { NHSO_ISSUES, NHSO_13F_ID } from "@/lib/schemes/nhso-13f";
 import type {
   AuthorityResponse,
   ClaimOutcome,
+  ClaimRecord,
   SubmissionBatch,
 } from "@/lib/domain/claim";
 import { getIssue, getScheme } from "@/lib/domain/scheme";
@@ -521,6 +522,64 @@ function buildAuthorityResponses(
 }
 
 /**
+ * รายการรายตัวใน batch สร้างตอนที่ผู้ใช้กดดูเท่านั้น
+ * ไม่เก็บล่วงหน้าเพราะ 5,013 หน่วย คูณหลายพันรายการ จะกิน memory เกินจำเป็น
+ *
+ * ผลรวมของรายการต้องตรงกับยอดของ batch เป๊ะ ไม่งั้นผู้ใช้นับแล้วไม่ตรง
+ */
+export function getClaimRecords(batchId: string): ClaimRecord[] {
+  const batch = getSubmissionBatches().find((b) => b.batchId === batchId);
+  if (!batch) return [];
+
+  const rng = createRng(hashCode(batchId));
+  const records: ClaimRecord[] = [];
+  const scheme = getScheme(NHSO_13F_ID);
+  const successStatus =
+    scheme?.statuses.find((s) => s.stageId === "paid")?.code ?? "5005";
+  const failStatus =
+    scheme?.statuses.find((s) => s.stageId === "rejected")?.code ?? "3000";
+  const pendingStatus =
+    scheme?.statuses.find((s) => s.stageId === "processing")?.code ?? "2000";
+
+  const dayPrefix = batch.submittedAt.slice(2, 10).replace(/-/g, "");
+
+  for (let i = 0; i < batch.total; i += 1) {
+    const outcome: ClaimOutcome =
+      i < batch.failed
+        ? "failed"
+        : i < batch.failed + batch.pending
+          ? "pending"
+          : "success";
+
+    const code = outcome === "failed" ? weightedIssue(rng) : null;
+
+    records.push({
+      seq: i + 1,
+      vn: `${dayPrefix}${String(i + 1).padStart(4, "0")}`,
+      outcome,
+      statusCode:
+        outcome === "failed"
+          ? failStatus
+          : outcome === "pending"
+            ? pendingStatus
+            : successStatus,
+      responses: code ? buildAuthorityResponses(rng, code, i + 1) : undefined,
+    });
+  }
+
+  return records;
+}
+
+/** seed จากรหัส batch ให้ข้อมูลของแต่ละ batch คงที่ ไม่เปลี่ยนทุกครั้งที่เปิด */
+function hashCode(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (Math.imul(hash, 31) + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+/**
  * batch ย้อนหลัง 14 วัน หน่วยบริการหนึ่งส่งได้หลายรอบต่อวัน
  * สร้างจาก summary เดิม ตัวเลขจึงสอดคล้องกับหน้าอื่น ไม่ใช่สุ่มแยกชุด
  */
@@ -538,12 +597,42 @@ export function getSubmissionBatches(): SubmissionBatch[] {
   for (const p of getProviderSummaries()) {
     const batchCount = 1 + Math.floor(rng() * 4);
 
+    /**
+     * 🔴 ยอดรวมทุก batch ต้องเท่ากับยอดของหน่วยบริการเป๊ะ
+     * เดิมคูณด้วยค่าสุ่มทีละ batch ทำให้รวมแล้วไม่ตรงกับการ์ดสรุปด้านบน
+     * ผู้ใช้บวกเลขตามแล้วไม่ตรงจะเลิกเชื่อตัวเลขทั้งหน้าทันที
+     * จึงแบ่งยอดจริงออกเป็นก้อน แล้วยกเศษที่เหลือให้ก้อนสุดท้าย
+     */
+    let remainingTotal = p.totalSent;
+    let remainingFailed = p.failedCount;
+    let remainingPending = p.pendingCount;
+
     for (let i = 0; i < batchCount; i += 1) {
-      const total = Math.max(1, Math.round((p.totalSent / batchCount) * (0.7 + rng() * 0.6)));
-      const success = Math.round(total * (p.successRate / 100));
-      const remaining = total - success;
-      const pending = Math.round(remaining * rng() * 0.4);
-      const failed = remaining - pending;
+      const isLast = i === batchCount - 1;
+      const share = isLast ? 1 : 1 / (batchCount - i);
+
+      /**
+       * ปัดเศษแยกแต่ละช่องทำให้ success + failed + pending ไม่เท่ากับ total
+       * จึงปัดแค่ failed กับ pending แล้วให้ success รับส่วนที่เหลือเสมอ
+       * ยอดในแถวจึงบวกกันได้ลงตัวทุกแถว
+       */
+      const failed = isLast
+        ? remainingFailed
+        : Math.min(remainingFailed, Math.round(remainingFailed * share));
+      const pending = isLast
+        ? remainingPending
+        : Math.min(remainingPending, Math.round(remainingPending * share));
+      const total = isLast
+        ? remainingTotal
+        : Math.max(
+            failed + pending,
+            Math.round(remainingTotal * share),
+          );
+      const success = total - failed - pending;
+
+      remainingTotal -= total;
+      remainingFailed -= failed;
+      remainingPending -= pending;
 
       const outcome: ClaimOutcome =
         failed > 0 ? "failed" : pending > 0 ? "pending" : "success";

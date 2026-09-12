@@ -79,3 +79,21 @@ export interface SubmissionBatch {
   /** ข้อความที่หน่วยงานปลายทางตอบกลับมาจริง */
   authorityResponses?: AuthorityResponse[];
 }
+
+/**
+ * รายการเคลมรายตัวใน batch
+ *
+ * เก็บได้แค่เลขอ้างอิงของหน่วยบริการ (vn, an, seq) ห้ามมีข้อมูลผู้ป่วย
+ * ดูกฎเต็มใน CLAUDE.md ข้อ 2.1
+ */
+export interface ClaimRecord {
+  /** ลำดับในแฟ้มที่ส่ง ใช้อ้างอิงกับหน่วยบริการ */
+  seq: number;
+  vn: string;
+  an?: string;
+  outcome: ClaimOutcome;
+  /** รหัสสถานะที่หน่วยงานปลายทางส่งกลับ */
+  statusCode: string;
+  /** ข้อความที่หน่วยงานปลายทางตอบกลับ มีเฉพาะรายการที่ไม่ผ่าน */
+  responses?: AuthorityResponse[];
+}
