@@ -161,29 +161,35 @@ export function DashboardView() {
             )}
           </Card>
 
-          <Card>
-            <CardHeader
-              title="หน่วยบริการที่ต้องช่วยด่วน"
-              description="เรียงตามความเร่งด่วน คิดจากอัตราที่ส่งไม่สำเร็จควบคู่กับปริมาณที่กระทบ"
-            />
-            {isPending ? (
-              <ProvidersNeedHelpSkeleton />
-            ) : (
-              <ProvidersNeedHelp rows={data.providersNeedingHelp} />
-            )}
-          </Card>
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+            <Card className="flex flex-col xl:col-span-2">
+              <CardHeader
+                title="หน่วยบริการที่ต้องช่วยด่วน"
+                description="เรียงตามความเร่งด่วน คิดจากอัตราที่ส่งไม่สำเร็จควบคู่กับปริมาณที่กระทบ"
+              />
+              <div className="min-h-0 flex-1">
+                {isPending ? (
+                  <ProvidersNeedHelpSkeleton />
+                ) : (
+                  <ProvidersNeedHelp rows={data.providersNeedingHelp} />
+                )}
+              </div>
+            </Card>
 
-          <Card>
-            <CardHeader
-              title="หน่วยบริการที่ดีขึ้นมากที่สุด"
-              description="เทียบอัตราสำเร็จกับช่วงก่อนหน้า นับเฉพาะที่ส่งมากพอจะเชื่อถือได้"
-            />
-            {isPending ? (
-              <MostImprovedSkeleton />
-            ) : (
-              <MostImproved rows={data.mostImproved} />
-            )}
-          </Card>
+            <Card className="flex flex-col">
+              <CardHeader
+                title="ดีขึ้นมากที่สุด"
+                description="เทียบกับช่วงก่อนหน้า"
+              />
+              <div className="flex min-h-0 flex-1 flex-col">
+                {isPending ? (
+                  <MostImprovedSkeleton />
+                ) : (
+                  <MostImproved rows={data.mostImproved} />
+                )}
+              </div>
+            </Card>
+          </div>
         </>
       )}
     </div>

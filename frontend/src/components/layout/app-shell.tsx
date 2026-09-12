@@ -25,7 +25,7 @@ export function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-dvh bg-background">
+    <div className="flex min-h-dvh items-start bg-background">
       <Sidebar
         user={MOCK_USER}
         collapsed={collapsed}
