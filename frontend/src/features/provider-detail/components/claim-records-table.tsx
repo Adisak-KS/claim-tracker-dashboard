@@ -16,7 +16,9 @@ import {
   DataTableRow,
 } from "@/components/ui/data-table";
 import { DEFAULT_PAGE_SIZE, Pagination } from "@/components/ui/pagination";
-import { SearchFilter } from "@/components/ui/filter-bar";
+import { SearchFilter, SelectFilter } from "@/components/ui/filter-bar";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { RANGE_PRESETS, toApiDate, type DateRange } from "@/lib/date-range";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/shared/states";
@@ -33,7 +35,11 @@ const OUTCOME_TONE: Record<ClaimOutcome, StatusTone> = {
   cancelled: "neutral",
 };
 
-const FILTERS = [
+/** 30 วันเพราะเจ้าหน้าที่ตามแก้ย้อนหลังได้หลายสัปดาห์ ไม่ใช่ดูแค่ของวันนี้ */
+const DEFAULT_RANGE = RANGE_PRESETS.find((p) => p.id === "last30")!;
+
+/** ใช้ dropdown ให้ตรงกับตัวกรองผลลัพธ์ในหน้า /submissions และ /providers */
+const OUTCOME_OPTIONS = [
   { value: "failed", label: "ที่ต้องแก้" },
   { value: "success", label: "ที่สำเร็จ" },
   { value: "pending", label: "รอผล" },
@@ -80,6 +86,7 @@ export function ClaimRecordsTable({
   code: string;
   schemeId: SchemeId;
 }) {
+  const [range, setRange] = useState<DateRange>(() => DEFAULT_RANGE.resolve());
   const [outcome, setOutcome] = useState("failed");
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
@@ -98,12 +105,24 @@ export function ClaimRecordsTable({
     return () => clearTimeout(timer);
   }, [q]);
 
+  const from = toApiDate(range.from);
+  const to = toApiDate(range.to);
+
   const { data, isPending, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ["provider-records", code, outcome, debouncedQ, page, pageSize],
+    queryKey: [
+      "provider-records",
+      code,
+      from,
+      to,
+      outcome,
+      debouncedQ,
+      page,
+      pageSize,
+    ],
     queryFn: () =>
       apiGet<Paginated<ClaimRecordDetail>>(
         `/api/providers/${code}/records`,
-        { outcome, q: debouncedQ, page, pageSize },
+        { from, to, outcome, q: debouncedQ, page, pageSize },
       ),
     placeholderData: keepPreviousData,
   });
@@ -113,38 +132,35 @@ export function ClaimRecordsTable({
     setPage(1);
   }
 
+  function changeRange(next: DateRange) {
+    setRange(next);
+    setPage(1);
+  }
+
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border px-4 py-3">
-        <div
-          className="flex flex-wrap gap-1"
-          role="group"
-          aria-label="กรองรายการ"
-        >
-          {FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => changeOutcome(filter.value)}
-              aria-pressed={outcome === filter.value}
-              className={cn(
-                "cursor-pointer rounded-[var(--radius)] px-2.5 py-1.5 text-sm font-medium transition-colors",
-                outcome === filter.value
-                  ? "bg-primary text-on-primary"
-                  : "text-muted-foreground hover:bg-surface-muted hover:text-foreground",
-              )}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
-
+      {/* เรียงแบบเดียวกับหน้า /providers คือค้นหาอยู่ซ้ายสุดและยืดเต็มที่เหลือ */}
+      <div className="flex flex-wrap items-end gap-3 border-b border-border px-4 py-3">
         <SearchFilter
           label="ค้นหา"
           value={q}
           placeholder="VN หรือรหัสข้อผิดพลาด"
           onChange={setQ}
-          className="w-56"
+          className="min-w-56 flex-1"
+        />
+
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-muted-foreground">
+            ช่วงวันที่
+          </span>
+          <DateRangePicker value={range} onChange={changeRange} />
+        </div>
+
+        <SelectFilter
+          label="ผลลัพธ์"
+          value={outcome}
+          options={OUTCOME_OPTIONS}
+          onChange={changeOutcome}
         />
       </div>
 

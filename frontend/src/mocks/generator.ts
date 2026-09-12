@@ -585,7 +585,11 @@ function hashCode(value: string): number {
  */
 let batchCache: SubmissionBatch[] | null = null;
 
-const BATCH_HISTORY_DAYS = 14;
+/**
+ * ต้องครอบคลุมช่วงที่ยาวสุดใน RANGE_PRESETS (เดือนที่แล้ว) ไม่งั้นเลือกแล้วได้จอว่าง
+ * เผื่อไว้ถึง 90 วัน เพราะผู้ใช้อาจขอดูย้อนหลังเป็นไตรมาส
+ */
+const BATCH_HISTORY_DAYS = 90;
 
 /** ข้อจำกัดของ API สปสช. ส่งได้ครั้งละไม่เกิน 10 รายการ */
 const CHUNK_SIZE = 10;

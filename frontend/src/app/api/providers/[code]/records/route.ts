@@ -14,6 +14,13 @@ interface ProviderClaimRecord extends ClaimRecord {
   submittedAt: string;
 }
 
+function toLocalDay(iso: string): string {
+  const d = new Date(iso);
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ code: string }> },
@@ -21,6 +28,8 @@ export async function GET(
   const { code } = await params;
   const { searchParams } = new URL(request.url);
   const outcome = searchParams.get("outcome") ?? "failed";
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
   const q = (searchParams.get("q") ?? "").trim();
   const page = Math.max(1, Number(searchParams.get("page") ?? 1));
   const pageSize = Math.min(100, Number(searchParams.get("pageSize") ?? 10));
@@ -33,9 +42,18 @@ export async function GET(
     );
   }
 
-  const batches = getSubmissionBatches().filter(
-    (b) => b.providerCode === provider.newCode,
-  );
+  /**
+   * 🔴 ห้าม slice จาก ISO string ตรง ๆ เพราะนั่นเป็นเวลา UTC
+   * เวลาไทยเป็น UTC+7 รายการที่ส่งตอน 6 โมงเช้าจะถูกนับเป็นวันก่อนหน้า
+   * ต้องแปลงเป็นวันที่แบบเวลาท้องถิ่นก่อนเทียบเสมอ (CLAUDE.md ข้อ 4.5)
+   */
+  const batches = getSubmissionBatches().filter((b) => {
+    if (b.providerCode !== provider.newCode) return false;
+    const day = toLocalDay(b.submittedAt);
+    if (from && day < from) return false;
+    if (to && day > to) return false;
+    return true;
+  });
 
   let rows: ProviderClaimRecord[] = batches.flatMap((batch) =>
     getClaimRecords(batch.batchId).map((record) => ({

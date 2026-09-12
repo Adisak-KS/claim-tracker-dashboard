@@ -78,7 +78,7 @@ export function ProviderDetailView({ code }: { code: string }) {
 
       <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
-          label="ส่งทั้งหมด (14 วัน)"
+          label="ส่งทั้งหมด"
           value={formatNumber(provider.totalSent)}
         />
         <StatCard
