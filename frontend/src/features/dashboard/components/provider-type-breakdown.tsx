@@ -3,7 +3,12 @@
 import { AlertTriangle } from "lucide-react";
 import type { ProviderTypeBreakdown } from "@/lib/domain/summary";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Column, DataTable, DataTableHead } from "@/components/ui/data-table";
+import {
+  Column,
+  DataTable,
+  DataTableHead,
+  DataTableRow,
+} from "@/components/ui/data-table";
 import { rateBarClass, rateTextClass } from "@/lib/domain/rate-tone";
 import { cn, formatCompact, formatNumber, formatPercent } from "@/lib/utils";
 
@@ -29,10 +34,7 @@ export function ProviderTypeBreakdownTable({
         </DataTableHead>
         <tbody>
           {rows.map((row) => (
-            <tr
-              key={row.type}
-              className="border-b border-border last:border-0 hover:bg-surface-muted"
-            >
+            <DataTableRow key={row.type}>
               <td className="px-4 py-2.5 font-medium text-foreground">
                 {row.label}
               </td>
@@ -76,7 +78,7 @@ export function ProviderTypeBreakdownTable({
                   <span className="text-sm text-muted-foreground">0</span>
                 )}
               </td>
-            </tr>
+            </DataTableRow>
           ))}
         </tbody>
     </DataTable>

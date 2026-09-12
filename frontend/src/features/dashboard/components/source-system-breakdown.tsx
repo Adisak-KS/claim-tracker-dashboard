@@ -3,7 +3,12 @@
 import { TriangleAlert } from "lucide-react";
 import type { SourceSystemBreakdown } from "@/lib/domain/summary";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Column, DataTable, DataTableHead } from "@/components/ui/data-table";
+import {
+  Column,
+  DataTable,
+  DataTableHead,
+  DataTableRow,
+} from "@/components/ui/data-table";
 import { rateBarClass, rateTextClass } from "@/lib/domain/rate-tone";
 import { cn, formatCompact, formatNumber, formatPercent } from "@/lib/utils";
 
@@ -47,12 +52,9 @@ export function SourceSystemBreakdownTable({
               const anomaly = row.rateVsAverage <= ANOMALY_THRESHOLD;
 
               return (
-                <tr
+                <DataTableRow
                   key={row.system}
-                  className={cn(
-                    "border-b border-border last:border-0 hover:bg-surface-muted",
-                    anomaly && "bg-warning-surface/40",
-                  )}
+                  className={cn(anomaly && "bg-warning-surface/40")}
                 >
                   <td className="px-4 py-2.5 font-medium text-foreground">
                     <span className="flex items-center gap-1.5">
@@ -104,7 +106,7 @@ export function SourceSystemBreakdownTable({
                     {row.rateVsAverage > 0 ? "+" : ""}
                     {row.rateVsAverage.toFixed(1)}
                   </td>
-                </tr>
+                </DataTableRow>
               );
             })}
           </tbody>

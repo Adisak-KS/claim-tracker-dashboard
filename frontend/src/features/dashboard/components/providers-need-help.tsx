@@ -7,7 +7,12 @@ import type { ProviderSummary } from "@/lib/domain/summary";
 import "@/lib/schemes";
 import { getIssueLabel, type SchemeId } from "@/lib/domain/scheme";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Column, DataTable, DataTableHead } from "@/components/ui/data-table";
+import {
+  Column,
+  DataTable,
+  DataTableHead,
+  DataTableRow,
+} from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { rateTone } from "@/lib/domain/rate-tone";
 import { formatNumber, formatPercent, formatRelativeTH } from "@/lib/utils";
@@ -34,10 +39,7 @@ export function ProvidersNeedHelp({
         </DataTableHead>
         <tbody>
           {rows.map((row) => (
-            <tr
-              key={row.newCode}
-              className="border-b border-border transition-colors last:border-0 hover:bg-surface-muted"
-            >
+            <DataTableRow key={row.newCode}>
               <td className="px-4 py-2.5">
                 <Link
                   href={`/providers/${row.newCode}`}
@@ -73,7 +75,7 @@ export function ProvidersNeedHelp({
               <td className="px-4 py-2.5 text-muted-foreground">
                 {formatRelativeTH(row.lastSentAt)}
               </td>
-            </tr>
+            </DataTableRow>
           ))}
         </tbody>
       </DataTable>

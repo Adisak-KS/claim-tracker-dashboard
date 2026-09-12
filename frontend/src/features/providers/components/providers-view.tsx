@@ -21,6 +21,7 @@ import {
   Column,
   DataTable,
   DataTableHead,
+  DataTableRow,
   type SortState,
 } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
@@ -282,10 +283,7 @@ export function ProvidersView() {
                 className={isFetching ? "opacity-60 transition-opacity" : "transition-opacity"}
               >
                 {rows.map((row: ProviderSummary) => (
-                  <tr
-                    key={row.newCode}
-                    className="border-b border-border transition-colors last:border-0 hover:bg-surface-muted"
-                  >
+                  <DataTableRow key={row.newCode}>
                     <td className="px-4 py-2.5">
                       <Link
                         href={`/providers/${row.newCode}`}
@@ -319,7 +317,7 @@ export function ProvidersView() {
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {formatRelativeTH(row.lastSentAt)}
                     </td>
-                  </tr>
+                  </DataTableRow>
                 ))}
               </tbody>
           </DataTable>

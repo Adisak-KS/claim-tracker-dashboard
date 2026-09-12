@@ -6,6 +6,12 @@ import { FileBarChart2, Trophy } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableSkeleton } from "@/components/ui/skeleton";
+import {
+  Column,
+  DataTable,
+  DataTableHead,
+  DataTableRow,
+} from "@/components/ui/data-table";
 import { ErrorState } from "@/components/shared/states";
 import {
   ProviderTypeBreakdownTable,
@@ -77,38 +83,24 @@ export function ReportsView() {
             <TableSkeleton rows={10} columns={5} />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table
-              className={cn(
-                "w-full min-w-[46rem] border-collapse text-sm transition-opacity",
-                isFetching && "opacity-60",
-              )}
+          <DataTable
+              columns={6}
+              className={cn(isFetching && "opacity-60 transition-opacity")}
             >
-              <thead>
-                <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                  <th className="px-4 py-2.5 text-center font-medium">อันดับ</th>
-                  <th className="px-4 py-2.5 font-medium">หน่วยบริการ</th>
-                  <th className="px-4 py-2.5 font-medium">ประเภท</th>
-                  <th className="px-4 py-2.5 text-right font-medium">
-                    ส่งสำเร็จ
-                  </th>
-                  <th className="px-4 py-2.5 text-right font-medium">
-                    ส่งทั้งหมด
-                  </th>
-                  <th className="px-4 py-2.5 text-right font-medium">
-                    อัตราสำเร็จ
-                  </th>
-                </tr>
-              </thead>
+              <DataTableHead>
+                <Column align="center">อันดับ</Column>
+                <Column>หน่วยบริการ</Column>
+                <Column>ประเภท</Column>
+                <Column align="right">ส่งสำเร็จ</Column>
+                <Column align="right">ส่งทั้งหมด</Column>
+                <Column align="right">อัตราสำเร็จ</Column>
+              </DataTableHead>
               <tbody>
                 {data.topProviders.map((row, index) => {
                   const isLead = index < LEAD_COUNT;
 
                   return (
-                    <tr
-                      key={row.newCode}
-                      className="border-b border-border transition-colors last:border-0 hover:bg-surface-muted"
-                    >
+                    <DataTableRow key={row.newCode}>
                       <td
                         className={cn(
                           "px-4 text-center tabular-nums",
@@ -151,12 +143,11 @@ export function ReportsView() {
                       <td className="px-4 py-2.5 text-right tabular-nums">
                         {formatPercent(row.successRate)}
                       </td>
-                    </tr>
+                    </DataTableRow>
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+            </DataTable>
         )}
       </Card>
 

@@ -17,6 +17,7 @@ import {
   Column,
   DataTable,
   DataTableHead,
+  DataTableRow,
   type SortState,
 } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton";
@@ -199,10 +200,7 @@ export function SubmissionsView() {
               </DataTableHead>
               <tbody className="transition-opacity">
                 {rows.map((row) => (
-                  <tr
-                    key={row.batchId}
-                    className="border-b border-border transition-colors last:border-0 hover:bg-surface-muted"
-                  >
+                  <DataTableRow key={row.batchId}>
                     <td className="px-4 py-2.5">
                       <code className="font-mono text-xs text-muted-foreground">
                         {row.batchId}
@@ -243,7 +241,7 @@ export function SubmissionsView() {
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {formatDateTimeTH(row.submittedAt)}
                     </td>
-                  </tr>
+                  </DataTableRow>
                 ))}
               </tbody>
           </DataTable>

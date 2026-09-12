@@ -40,7 +40,7 @@ export function DataTable({ columns, children, className }: DataTableProps) {
   return (
     <div className="overflow-x-auto">
       <table
-        className={cn("w-full border-collapse text-sm", className)}
+        className={cn("w-full border-separate border-spacing-0 text-sm", className)}
         style={{ minWidth: `${minWidth}rem` }}
       >
         {children}
@@ -50,15 +50,15 @@ export function DataTable({ columns, children, className }: DataTableProps) {
 }
 
 /**
- * หัวตารางลอยค้างตอนเลื่อน
+ * หัวตารางลอยค้างตอนเลื่อน มี 3 กับดักที่ต้องทำครบทั้งหมด ขาดข้อเดียวก็พัง
  *
- * 🔴 พื้นหลังกับ sticky ต้องอยู่ที่ <th> ไม่ใช่ <thead>
- * เบราว์เซอร์ไม่ทำ sticky ให้ <thead> ตรง ๆ มันไปเกาะที่เซลล์แต่ละตัว
- * ถ้าใส่ bg ไว้ที่ <thead> พื้นหลังจะไม่ลอยตาม แถวข้อมูลจะทะลุขึ้นมาซ้อนหัวตาราง
- *
- * เว้น 3.5rem ให้พ้น Topbar ที่สูง h-14 ไม่งั้นหัวตารางจะมุดหายไปข้างใต้
- * เส้นคั่นใช้ box-shadow ไม่ใช่ border เพราะ border ของ sticky cell
- * จะหลุดหายตอนเลื่อนในบางเบราว์เซอร์
+ * 1. 🔴 ตารางต้องเป็น border-separate ไม่ใช่ border-collapse
+ *    ถ้า collapse เบราว์เซอร์จะไม่วาดพื้นหลังของเซลล์ที่ sticky ให้
+ *    แถวข้อมูลจะมองทะลุขึ้นมาเห็นเป็นตัวหนังสือจาง ๆ ซ้อนหัวตาราง
+ *    (border-separate ทำให้ต้องวาดเส้นคั่นด้วย box-shadow แทน border)
+ * 2. sticky กับพื้นหลังต้องอยู่ที่ <th> ไม่ใช่ <thead>
+ *    เบราว์เซอร์ไม่ทำ sticky ให้ <thead> ตรง ๆ มันเกาะที่เซลล์แต่ละตัว
+ * 3. เว้น 3.5rem ให้พ้น Topbar ที่สูง h-14 ไม่งั้นหัวตารางจะมุดหายไปข้างใต้
  */
 const STICKY_HEAD_CELL =
   "sticky top-14 z-20 bg-surface shadow-[inset_0_-1px_0_var(--border)]";
@@ -149,5 +149,29 @@ export function Column({
         />
       </button>
     </th>
+  );
+}
+
+/**
+ * แถวข้อมูล ใช้แทน <tr> ธรรมดา
+ * ตารางเป็น border-separate เส้นคั่นจึงต้องวาดที่ <td> ไม่ใช่ที่ <tr>
+ * เพราะ border ของ <tr> จะไม่ถูกวาดเมื่อ border-separate
+ */
+export function DataTableRow({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <tr
+      className={cn(
+        "transition-colors hover:bg-surface-muted [&>td]:border-b [&>td]:border-border last:[&>td]:border-0",
+        className,
+      )}
+    >
+      {children}
+    </tr>
   );
 }
