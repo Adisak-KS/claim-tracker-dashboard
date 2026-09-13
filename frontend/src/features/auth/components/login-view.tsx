@@ -2,9 +2,11 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, LogIn, ShieldCheck } from "lucide-react";
+import { AlertCircle, FlaskConical, LogIn, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BmsLogo } from "@/components/layout/sidebar";
+
+const IS_MOCK = process.env.NEXT_PUBLIC_STATIC_MOCK === "1";
 
 /**
  * ยังไม่ต่อ BMS Life จริง จึงตรวจแค่ว่ากรอกครบไหม
@@ -41,6 +43,17 @@ export function LoginView() {
             เข้าสู่ระบบด้วยบัญชี BMS Life ของคุณ
           </p>
         </div>
+
+        {IS_MOCK && (
+          <p className="mb-4 flex items-start gap-2 rounded-[var(--radius)] border border-warning-border bg-warning-surface px-3 py-2.5 text-xs leading-relaxed text-warning">
+            <FlaskConical className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            <span>
+              <span className="font-semibold">รุ่นสาธิต ข้อมูลจำลองทั้งหมด</span>
+              <br />
+              กรอกชื่อผู้ใช้และรหัสผ่านอะไรก็ได้เพื่อเข้าดูหน้าจอ
+            </span>
+          </p>
+        )}
 
         <form
           onSubmit={handleSubmit}

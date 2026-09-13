@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { MockDataBanner } from "./mock-data-banner";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 import type { SessionUser } from "@/lib/auth/roles";
@@ -34,6 +35,7 @@ export function AppShell({
         onCloseMobile={() => setMobileOpen(false)}
       />
       <div className="flex min-w-0 flex-1 flex-col">
+        <MockDataBanner />
         <Topbar
           user={MOCK_USER}
           title={title}
