@@ -11,6 +11,11 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import {
+  FilterBar,
+  SelectFilter,
+  type FilterOption,
+} from "@/components/ui/filter-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/shared/states";
 import "@/lib/schemes";
@@ -152,9 +157,31 @@ function IssueGroupRow({
   );
 }
 
+/** ใช้ชุดเดียวกับหน้าหน่วยบริการ ผู้ใช้จะได้ไม่ต้องเรียนรู้ตัวกรองใหม่ทุกหน้า */
+const ZONE_OPTIONS: FilterOption[] = [
+  { value: "all", label: "ทุกเขต" },
+  ...Array.from({ length: 13 }, (_, i) => ({
+    value: String(i + 1),
+    label: `เขต ${i + 1}`,
+  })),
+];
+
+const SYSTEM_OPTIONS: FilterOption[] = [
+  { value: "all", label: "ทุกระบบ" },
+  { value: "HOSxP", label: "HOSxP" },
+  { value: "EHP", label: "EHP" },
+  { value: "NHIP", label: "NHIP" },
+  { value: "OTHER", label: "อื่น ๆ" },
+];
+
 export function IssuesView() {
   const params = useSearchParams();
-  const { data, isPending, isError, error, refetch } = useIssues();
+  const [zone, setZone] = useState("all");
+  const [system, setSystem] = useState("all");
+  const { data, isPending, isError, error, refetch } = useIssues({
+    zone,
+    system,
+  });
   /** null = ผู้ใช้ยังไม่ได้เลือกเอง ให้ระบบเปิดกลุ่มแรกให้ */
   const [picked, setPicked] = useState<string | null>(params.get("group"));
 
@@ -166,6 +193,12 @@ export function IssuesView() {
    */
   const expanded = picked ?? rows[0]?.groupId ?? null;
   const maxCount = rows[0]?.count ?? 1;
+  const activeCount = [zone !== "all", system !== "all"].filter(Boolean).length;
+
+  function resetFilters() {
+    setZone("all");
+    setSystem("all");
+  }
 
   return (
     <div className="space-y-4">
@@ -176,6 +209,21 @@ export function IssuesView() {
       />
 
       <Card className="animate-rise overflow-hidden">
+        <FilterBar activeCount={activeCount} onReset={resetFilters}>
+          <SelectFilter
+            label="เขตสุขภาพ"
+            value={zone}
+            options={ZONE_OPTIONS}
+            onChange={setZone}
+          />
+          <SelectFilter
+            label="ระบบต้นทาง"
+            value={system}
+            options={SYSTEM_OPTIONS}
+            onChange={setSystem}
+          />
+        </FilterBar>
+
         {isError ? (
           <ErrorState
             message={
@@ -187,14 +235,15 @@ export function IssuesView() {
           />
         ) : isPending ? (
           <div className="divide-y divide-border">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3">
-                <Skeleton className="size-4" />
-                <div className="flex-1 space-y-2">
+            {/* จำนวนแถวต้องเท่าของจริง กัน layout กระโดดตอนข้อมูลมา */}
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-4">
+                <Skeleton className="size-4 shrink-0" />
+                <div className="min-w-0 flex-1 space-y-2">
                   <Skeleton className="h-4 w-52" />
                   <Skeleton className="h-1.5 w-full" />
                 </div>
-                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-6 w-20 shrink-0" />
               </div>
             ))}
           </div>

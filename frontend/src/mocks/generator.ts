@@ -210,10 +210,28 @@ function buildTrend(
   return points;
 }
 
-export function getIssueGroupRanks(scale = 1): IssueGroupRank[] {
+export interface IssueRankFilter {
+  zone?: string;
+  system?: string;
+}
+
+/**
+ * กรองจากหน่วยบริการก่อนคิดอันดับ ไม่ใช่คิดทั้งประเทศแล้วค่อยหารส่วนแบ่ง
+ * เพราะปัญหาของแต่ละระบบต้นทางคนละชุดกัน ถ้าหารทีหลังสัดส่วนจะผิด
+ */
+export function getIssueGroupRanks(
+  scale = 1,
+  filter: IssueRankFilter = {},
+): IssueGroupRank[] {
   const rng = createRng(77301);
   const scheme = getScheme(NHSO_13F_ID);
-  const summaries = getProviderSummaries();
+  const summaries = getProviderSummaries().filter((s) => {
+    if (filter.zone && filter.zone !== "all" && String(s.healthZone) !== filter.zone)
+      return false;
+    if (filter.system && filter.system !== "all" && s.sourceSystem !== filter.system)
+      return false;
+    return true;
+  });
   const totalFailed = summaries.reduce((sum, s) => sum + s.failedCount, 0);
   const withIssues = summaries.filter((s) => s.failedCount > 0).length;
 

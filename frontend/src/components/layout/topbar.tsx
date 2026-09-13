@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut, Menu, Moon, Sun } from "lucide-react";
+import { ModalPortal } from "@/components/ui/modal-portal";
+import { Button } from "@/components/ui/button";
 import { ROLE_LABEL, type SessionUser } from "@/lib/auth/roles";
 
 interface TopbarProps {
@@ -11,7 +14,9 @@ interface TopbarProps {
 }
 
 export function Topbar({ user, title, onOpenMobileNav }: TopbarProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
   const [dark, setDark] = useState(false);
 
   function toggleTheme() {
@@ -84,6 +89,10 @@ export function Topbar({ user, title, onOpenMobileNav }: TopbarProps) {
               </div>
               <button
                 type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setConfirmLogout(true);
+                }}
                 className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-surface-muted"
                 role="menuitem"
               >
@@ -94,6 +103,51 @@ export function Topbar({ user, title, onOpenMobileNav }: TopbarProps) {
           )}
         </div>
       </div>
+
+      {confirmLogout && (
+        <LogoutDialog
+          onCancel={() => setConfirmLogout(false)}
+          onConfirm={() => router.push("/login")}
+        />
+      )}
     </header>
+  );
+}
+
+/** ถามก่อนเสมอ เพราะกดพลาดแล้วต้องเข้าระบบใหม่ ซึ่งเสียเวลากว่าการยืนยันหนึ่งครั้ง */
+function LogoutDialog({
+  onCancel,
+  onConfirm,
+}: {
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <ModalPortal onClose={onCancel} label="ยืนยันการออกจากระบบ">
+      <div
+        className="animate-pop w-full max-w-sm rounded-[var(--radius)] border border-border bg-surface shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 py-4">
+          <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+            <LogOut className="size-4 text-danger" aria-hidden />
+            ออกจากระบบ
+          </h2>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            ระบบจะพากลับไปหน้าเข้าสู่ระบบ ต้องกรอกชื่อผู้ใช้และรหัสผ่านใหม่
+            เพื่อเข้าใช้งานอีกครั้ง
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-border bg-surface-muted/40 px-5 py-3">
+          <Button variant="ghost" onClick={onCancel}>
+            ยกเลิก
+          </Button>
+          <Button variant="danger" icon={LogOut} onClick={onConfirm}>
+            ออกจากระบบ
+          </Button>
+        </div>
+      </div>
+    </ModalPortal>
   );
 }

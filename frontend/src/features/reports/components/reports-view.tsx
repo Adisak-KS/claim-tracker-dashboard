@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { FileBarChart2, Trophy } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
+import { Tabs } from "@/components/ui/tabs";
+import { TypeSuccessChart } from "./type-success-chart";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import {
@@ -45,26 +47,17 @@ export function ReportsView() {
           description="เรียงตามจำนวนรายการที่ส่งสำเร็จ ไม่ใช่อัตราสำเร็จ เพราะรายที่ส่งน้อยแต่ผ่านหมดจะได้ 100% ซึ่งเทียบกันไม่ได้"
           action={
             <div
-              className="flex items-center gap-1 rounded-[var(--radius)] border border-border p-0.5"
-              role="group"
-              aria-label="จำนวนอันดับที่แสดง"
+              className="flex items-center"
             >
-              {TOP_OPTIONS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => setLimit(option)}
-                  aria-pressed={limit === option}
-                  className={cn(
-                    "cursor-pointer rounded-[calc(var(--radius)-2px)] px-2.5 py-1 text-sm font-medium transition-colors",
-                    limit === option
-                      ? "bg-primary text-on-primary"
-                      : "text-muted-foreground hover:bg-surface-muted hover:text-foreground",
-                  )}
-                >
-                  {option}
-                </button>
-              ))}
+              <Tabs
+                value={String(limit)}
+                options={TOP_OPTIONS.map((o) => ({
+                  value: String(o),
+                  label: String(o),
+                }))}
+                onChange={(v) => setLimit(Number(v) as (typeof TOP_OPTIONS)[number])}
+                ariaLabel="จำนวนอันดับที่แสดง"
+              />
             </div>
           }
         />
@@ -159,7 +152,10 @@ export function ReportsView() {
         {isPending || !data ? (
           <ProviderTypeBreakdownSkeleton />
         ) : (
-          <ProviderTypeBreakdownTable rows={data.typeBreakdown} />
+          <>
+            <TypeSuccessChart rows={data.typeBreakdown} />
+            <ProviderTypeBreakdownTable rows={data.typeBreakdown} />
+          </>
         )}
       </Card>
 
