@@ -19,6 +19,7 @@
 | [design-system.md](design/design-system.md) | สี ฟอนต์ ระยะห่าง และกติกาหน้าตาของระบบ |
 | [pages.md](design/pages.md) | หน้าจอทั้งหมดและสิ่งที่แต่ละหน้าต้องแสดง |
 | [decisions.md](design/decisions.md) | บันทึกการตัดสินใจว่าเลือกอะไรเพราะอะไร |
+| [backend-stack.md](design/backend-stack.md) | ภาษา ฐานข้อมูล คิว และ index ของฝั่งหลังบ้าน |
 
 ### api (การเชื่อมต่อ)
 
