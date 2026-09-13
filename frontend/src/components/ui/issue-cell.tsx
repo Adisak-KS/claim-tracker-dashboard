@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CircleCheck, CircleSlash, Info, Wrench, X } from "lucide-react";
+import { ModalPortal } from "@/components/ui/modal-portal";
 import { getIssue, type SchemeId } from "@/lib/domain/scheme";
 import { cn } from "@/lib/utils";
 
@@ -69,29 +70,15 @@ function IssueDetailDialog({
 }) {
   const issue = getIssue(schemeId, code);
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
-
   return (
-    <div
-      className="animate-fade fixed inset-0 z-50 flex items-center justify-center bg-foreground/25 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="รายละเอียดปัญหา"
-      onClick={onClose}
-    >
+    <ModalPortal onClose={onClose} label="รายละเอียดปัญหา">
       <div
-        className="animate-pop w-full max-w-lg rounded-[var(--radius)] border border-border bg-surface shadow-lg"
+        className="animate-pop flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[var(--radius)] border border-border bg-surface shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border bg-surface-muted/40 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-bold text-foreground">
               {issue?.label ?? "ไม่พบคำอธิบายของรหัสนี้"}
             </p>
             <p className="mt-0.5 font-mono text-xs text-muted-foreground">
@@ -108,7 +95,7 @@ function IssueDetailDialog({
           </button>
         </div>
 
-        <div className="space-y-3 px-4 py-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
           {issue ? (
             <>
               <div>
@@ -129,7 +116,7 @@ function IssueDetailDialog({
           )}
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 

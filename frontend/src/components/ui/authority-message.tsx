@@ -81,22 +81,24 @@ function AllowClaimBadge({ value }: { value: "Y" | "N" | null }) {
 /**
  * แบบย่อสำหรับใช้ในตารางที่มีหลายสิบแถว
  *
- * ตารางต้องสแกนเร็ว จึงเหลือแค่รหัสกับข้อความ ไม่มีกรอบไม่มีพื้นหลัง
- * ธงส่งเบิกใหม่ย้ายไปเป็นคอลัมน์ของตัวเอง จะได้กวาดตาหาได้ทันที
- * วิธีแก้กับข้อความเต็มอยู่ใน modal ตอนกดที่แถว
+ * แสดงรหัสแรกรหัสเดียวแล้วบอกจำนวนที่เหลือเป็นตัวเลข
+ * ถ้ากางทุกรหัสในตาราง แถวจะสูงไม่เท่ากันจนกวาดสายตาตามไม่ทัน
+ * ธงส่งเบิกใหม่อยู่คอลัมน์ของตัวเอง ส่วนรายละเอียดเต็มอยู่ใน modal ตอนกดที่แถว
  */
 export function AuthorityMessageInline({
   response,
+  moreCount = 0,
 }: {
   response: AuthorityResponse;
+  moreCount?: number;
 }) {
   const blocked = response.allowClaim === "N";
 
   return (
-    <span className="flex items-start gap-2">
+    <span className="flex items-center gap-2">
       <code
         className={cn(
-          "mt-px shrink-0 rounded px-1.5 py-0.5 font-mono text-xs",
+          "shrink-0 rounded px-1.5 py-0.5 font-mono text-xs",
           blocked
             ? "bg-danger-surface text-danger"
             : "bg-surface-muted text-muted-foreground",
@@ -105,9 +107,18 @@ export function AuthorityMessageInline({
         {response.code}
       </code>
 
-      <span className="line-clamp-2 min-w-0 break-words text-sm text-foreground">
+      <span className="min-w-0 flex-1 truncate text-sm text-foreground">
         {response.message}
       </span>
+
+      {moreCount > 0 && (
+        <span
+          className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground"
+          title={`มีอีก ${moreCount} รหัส กดที่แถวเพื่อดูทั้งหมด`}
+        >
+          +{moreCount}
+        </span>
+      )}
     </span>
   );
 }

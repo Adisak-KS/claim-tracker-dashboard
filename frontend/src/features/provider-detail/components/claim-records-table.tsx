@@ -36,7 +36,7 @@ const OUTCOME_TONE: Record<ClaimOutcome, StatusTone> = {
 };
 
 /** 30 วันเพราะเจ้าหน้าที่ตามแก้ย้อนหลังได้หลายสัปดาห์ ไม่ใช่ดูแค่ของวันนี้ */
-/** ใช้ dropdown ให้ตรงกับตัวกรองผลลัพธ์ในหน้า /submissions และ /providers */
+/** ใช้ dropdown ให้ตรงกับตัวกรองผลลัพธ์ในหน้า /providers */
 const OUTCOME_OPTIONS = [
   { value: "failed", label: "ที่ต้องแก้" },
   { value: "success", label: "ที่สำเร็จ" },
@@ -160,7 +160,7 @@ export function ClaimRecordsTable({
         <SearchFilter
           label="ค้นหา"
           value={q}
-          placeholder="VN หรือรหัสข้อผิดพลาด"
+          placeholder="VN เลขที่รอบส่ง หรือรหัสข้อผิดพลาด"
           onChange={setQ}
           className="min-w-56 flex-1"
         />
@@ -212,10 +212,10 @@ export function ClaimRecordsTable({
             <DataTableHead>
               <Column>VN</Column>
               <Column>รอบการส่ง</Column>
-              <Column>เวลาที่ส่ง</Column>
               <Column align="center">ส่งเบิกใหม่</Column>
               <Column align="center">ผลลัพธ์</Column>
               <Column>ข้อความที่ตอบกลับ</Column>
+              <Column>เวลาที่ส่ง</Column>
             </DataTableHead>
             <tbody>
               {data.rows.map((record) => (
@@ -230,9 +230,6 @@ export function ClaimRecordsTable({
                   <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
                     {record.batchId}
                   </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">
-                    {formatDateTimeTH(record.submittedAt)}
-                  </td>
                   <td className="px-4 py-2.5 text-center">
                     <ResubmitCell responses={record.responses} />
                   </td>
@@ -244,19 +241,18 @@ export function ClaimRecordsTable({
                   </td>
                   <td className="max-w-md px-4 py-2.5 whitespace-normal">
                     {record.responses?.length ? (
-                      <span className="block space-y-1.5">
-                        {record.responses.map((response) => (
-                          <AuthorityMessageInline
-                            key={response.code}
-                            response={response}
-                          />
-                        ))}
-                      </span>
+                      <AuthorityMessageInline
+                        response={record.responses[0]}
+                        moreCount={record.responses.length - 1}
+                      />
                     ) : (
                       <span className="text-sm text-muted-foreground">
                         {getStatusLabel(schemeId, record.statusCode)}
                       </span>
                     )}
+                  </td>
+                  <td className="px-4 py-2.5 text-muted-foreground">
+                    {formatDateTimeTH(record.submittedAt)}
                   </td>
                 </DataTableRow>
               ))}

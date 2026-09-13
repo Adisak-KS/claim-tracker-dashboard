@@ -491,11 +491,11 @@ const FIELD_NAMES = [
   "INSCL",
 ];
 
-function buildAuthorityResponses(
+function buildAuthorityResponse(
   rng: () => number,
   code: string,
   failed: number,
-): AuthorityResponse[] {
+): AuthorityResponse {
   const issue = getIssue(NHSO_13F_ID, code);
   const file = pick(rng, FILE_NAMES);
   const field = pick(rng, FIELD_NAMES);
@@ -506,19 +506,38 @@ function buildAuthorityResponses(
     ? (issue?.label ?? code)
     : `แฟ้ม ${file} Seq.${seq} ข้อมูล ${field} ${issue?.label ?? "ไม่ผ่านการตรวจสอบ"}`;
 
-  return [
-    {
-      code,
-      message,
-      solution: issue?.remedy,
-      allowClaim:
-        issue?.resubmittable === null || issue?.resubmittable === undefined
-          ? null
-          : issue.resubmittable
-            ? "Y"
-            : "N",
-    },
-  ];
+  return {
+    code,
+    message,
+    solution: issue?.remedy,
+    allowClaim:
+      issue?.resubmittable === null || issue?.resubmittable === undefined
+        ? null
+        : issue.resubmittable
+          ? "Y"
+          : "N",
+  };
+}
+
+/**
+ * 1 รายการติดได้หลายรหัสพร้อมกัน เพราะ สปสช. ตรวจทุกกฎแล้วส่งกลับเป็น array
+ * ไม่ได้หยุดที่กฎแรกที่ไม่ผ่าน เจ้าหน้าที่จึงต้องเห็นครบทุกตัวถึงจะแก้จบในรอบเดียว
+ */
+function buildAuthorityResponses(
+  rng: () => number,
+  code: string,
+  failed: number,
+): AuthorityResponse[] {
+  const roll = rng();
+  const extraCount = roll < 0.45 ? 0 : roll < 0.8 ? 1 : roll < 0.95 ? 2 : 3;
+
+  const codes = [code];
+  for (let i = 0; i < extraCount; i += 1) {
+    const next = weightedIssue(rng);
+    if (!codes.includes(next)) codes.push(next);
+  }
+
+  return codes.map((c) => buildAuthorityResponse(rng, c, failed));
 }
 
 /**

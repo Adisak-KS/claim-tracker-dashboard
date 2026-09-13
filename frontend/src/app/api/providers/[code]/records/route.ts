@@ -67,10 +67,14 @@ export async function GET(
     rows = rows.filter((r) => r.outcome === outcome);
   }
   if (q) {
+    const needle = q.toLowerCase();
     rows = rows.filter(
       (r) =>
         r.vn.includes(q) ||
-        r.responses?.some((response) => response.code.includes(q)),
+        r.batchId.toLowerCase().includes(needle) ||
+        r.responses?.some((response) =>
+          response.code.toLowerCase().includes(needle),
+        ),
     );
   }
 
