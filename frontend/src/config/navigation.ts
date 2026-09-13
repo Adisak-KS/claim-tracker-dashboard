@@ -3,7 +3,6 @@ import {
   Building2,
   FileBarChart2,
   LayoutDashboard,
-  Send,
   Settings,
   TriangleAlert,
 } from "lucide-react";
@@ -28,6 +27,9 @@ export interface NavSection {
 /**
  * เพิ่มเมนูใหม่ = เพิ่ม object ในลิสต์นี้ที่เดียว
  * ไม่ต้องแก้ Sidebar หรือไฟล์อื่น
+ *
+ * /submissions ถอดออกจากเมนูแล้วแต่ไฟล์ยังอยู่ เข้าตรงด้วย URL ได้
+ * เหตุผลและเงื่อนไขที่จะลบจริงอยู่ใน docs/design/decisions.md
  */
 export const NAV_SECTIONS: NavSection[] = [
   {
@@ -44,12 +46,6 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/providers",
         icon: Building2,
         hint: "ค้นหาและดูสถานะราย รพ. คลินิก ร้านยา",
-      },
-      {
-        label: "การส่งเคลม",
-        href: "/submissions",
-        icon: Send,
-        hint: "รายการที่ส่งเข้ามาทั้งหมด",
       },
       {
         label: "ปัญหา",
