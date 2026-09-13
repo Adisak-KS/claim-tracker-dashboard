@@ -1,22 +1,14 @@
-import { NextResponse } from "next/server";
-import { getProviderSummaries } from "@/mocks/generator";
-import { matchesCode } from "@/lib/domain/provider";
+/**
+ * ตัวห่อบาง ๆ ของ provider-detail
+ *
+ * logic อยู่ใน server/api เพราะโหมดไฟล์นิ่ง (GitHub Pages) ต้องเรียกฟังก์ชันเดิม
+ * ตรง ๆ จากเบราว์เซอร์ ถ้า logic ติดอยู่ในไฟล์นี้จะเรียกไม่ได้
+ */
+import { handle } from "@/server/api/provider-detail";
 
-/** ระบบเก่าส่งรหัส 5 หลัก ระบบใหม่ส่ง 9 หลักใหม่ ต้องหาเจอทั้งคู่ */
 export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ code: string }> },
+  request: Request,
+  context: { params: Promise<{ code: string }> },
 ) {
-  const { code } = await params;
-  const provider = getProviderSummaries().find((p) => matchesCode(p, code));
-
-  if (!provider) {
-    return NextResponse.json(
-      { error: "PROVIDER_NOT_FOUND", message: "ไม่พบหน่วยบริการรหัสนี้" },
-      { status: 404 },
-    );
-  }
-
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return NextResponse.json({ provider });
+  return handle(request, context);
 }

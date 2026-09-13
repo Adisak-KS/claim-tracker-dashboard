@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# โฟลเดอร์พัก API ระหว่าง build ไฟล์นิ่ง ปกติจะถูกย้ายกลับเสมอ
+# เหลืออยู่แปลว่า build ถูกขัดจังหวะ
+/.api-parked/
+
+# ผลจาก Playwright MCP ตอนทดสอบ
+/.playwright-mcp/

@@ -1,18 +1,11 @@
-import { NextResponse } from "next/server";
-import { getTopProviders, getTypeBreakdown } from "@/mocks/generator";
-
-const ALLOWED_LIMITS = [10, 20, 50, 100];
+/**
+ * ตัวห่อบาง ๆ ของ reports
+ *
+ * logic อยู่ใน server/api เพราะโหมดไฟล์นิ่ง (GitHub Pages) ต้องเรียกฟังก์ชันเดิม
+ * ตรง ๆ จากเบราว์เซอร์ ถ้า logic ติดอยู่ในไฟล์นี้จะเรียกไม่ได้
+ */
+import { handle } from "@/server/api/reports";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const requested = Number(searchParams.get("limit") ?? 10);
-  const limit = ALLOWED_LIMITS.includes(requested) ? requested : 10;
-
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  return NextResponse.json({
-    limit,
-    topProviders: getTopProviders(limit),
-    typeBreakdown: getTypeBreakdown(),
-  });
+  return handle(request);
 }

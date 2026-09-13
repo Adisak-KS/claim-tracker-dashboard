@@ -1,0 +1,23 @@
+import { NextResponse } from "next/server";
+import { getProviderSummaries } from "@/mocks/generator";
+import { matchesCode } from "@/lib/domain/provider";
+
+
+/** ระบบเก่าส่งรหัส 5 หลัก ระบบใหม่ส่ง 9 หลักใหม่ ต้องหาเจอทั้งคู่ */
+export async function handle(
+  _request: Request,
+  { params }: { params: Promise<{ code: string }> },
+) {
+  const { code } = await params;
+  const provider = getProviderSummaries().find((p) => matchesCode(p, code));
+
+  if (!provider) {
+    return NextResponse.json(
+      { error: "PROVIDER_NOT_FOUND", message: "ไม่พบหน่วยบริการรหัสนี้" },
+      { status: 404 },
+    );
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return NextResponse.json({ provider });
+}

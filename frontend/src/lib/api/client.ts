@@ -5,6 +5,13 @@
  */
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
+/**
+ * โหมดไฟล์นิ่งสำหรับ GitHub Pages ซึ่งไม่มีเซิร์ฟเวอร์รัน API
+ * เปิดด้วย NEXT_PUBLIC_STATIC_MOCK=1 ตอน build เท่านั้น
+ * ตอน dev ยังยิง HTTP จริงเหมือนเดิม เส้นทางโค้ดจึงไม่ต่างจากของจริง
+ */
+const STATIC_MOCK = process.env.NEXT_PUBLIC_STATIC_MOCK === "1";
+
 export class ApiError extends Error {
   constructor(
     /** ข้อความที่ผู้ใช้ทั่วไปอ่านแล้วรู้ว่าต้องทำอะไรต่อ */
@@ -43,7 +50,12 @@ export async function apiGet<T>(
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), { credentials: "include" });
+    if (STATIC_MOCK) {
+      const { handleStatic } = await import("./static-router");
+      response = await handleStatic(url);
+    } else {
+      response = await fetch(url.toString(), { credentials: "include" });
+    }
   } catch {
     throw new ApiError(
       "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่",

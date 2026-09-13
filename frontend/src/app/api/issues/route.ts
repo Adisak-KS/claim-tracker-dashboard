@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import { getIssueGroupRanks } from "@/mocks/generator";
+/**
+ * ตัวห่อบาง ๆ ของ issues
+ *
+ * logic อยู่ใน server/api เพราะโหมดไฟล์นิ่ง (GitHub Pages) ต้องเรียกฟังก์ชันเดิม
+ * ตรง ๆ จากเบราว์เซอร์ ถ้า logic ติดอยู่ในไฟล์นี้จะเรียกไม่ได้
+ */
+import { handle } from "@/server/api/issues";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const zone = searchParams.get("zone") ?? "all";
-  const system = searchParams.get("system") ?? "all";
-
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return NextResponse.json({ rows: getIssueGroupRanks(1, { zone, system }) });
+  return handle(request);
 }
