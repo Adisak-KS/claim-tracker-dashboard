@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Building2, FileSpreadsheet, SearchX } from "lucide-react";
+import { Building2, Clock, FileSpreadsheet, List, SearchX } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import {
@@ -17,6 +17,8 @@ import {
   type FilterOption,
 } from "@/components/ui/filter-bar";
 import { IssueCell } from "@/components/ui/issue-cell";
+import { Tabs, type TabOption } from "@/components/ui/tabs";
+import { LatestRecordsTable } from "./latest-records-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Column,
@@ -40,7 +42,12 @@ import { exportToExcel } from "@/lib/export-excel";
 import { rateTone } from "@/lib/domain/rate-tone";
 import type { Paginated } from "@/lib/domain/summary";
 import { useProviders } from "../hooks/use-providers";
-import { formatNumber, formatPercent, formatRelativeTH } from "@/lib/utils";
+import {
+  formatDateTimeTH,
+  formatNumber,
+  formatPercent,
+  formatRelativeTH,
+} from "@/lib/utils";
 
 const ZONE_OPTIONS: FilterOption[] = [
   { value: "all", label: "ทุกเขต" },
@@ -66,6 +73,19 @@ const TYPE_OPTIONS: FilterOption[] = [
   })),
 ];
 
+/** สองมุมมองของข้อมูลชุดเดียวกัน ไม่ใช่คนละหน้า ตัวกรองจึงใช้ร่วมกัน */
+const MODE_OPTIONS: TabOption[] = [
+  { value: "latest", label: "รายการล่าสุด", icon: Clock },
+  { value: "providers", label: "รายหน่วยบริการ", icon: List },
+];
+
+const OUTCOME_OPTIONS: FilterOption[] = [
+  { value: "all", label: "ทุกผลลัพธ์" },
+  { value: "failed", label: "ที่ต้องแก้" },
+  { value: "success", label: "ที่สำเร็จ" },
+  { value: "pending", label: "รอผล" },
+];
+
 const STATUS_OPTIONS: FilterOption[] = [
   { value: "all", label: "ทุกสถานะ" },
   { value: "problem", label: "ติดปัญหา" },
@@ -83,6 +103,9 @@ export function ProvidersView() {
   const [system, setSystem] = useState("all");
   const [type, setType] = useState("all");
   const [status, setStatus] = useState(params.get("status") ?? "all");
+  /** เปิดมาที่รายการล่าสุดก่อน เพราะคนเปิดหน้านี้อยากรู้ว่าตอนนี้มีอะไรเข้ามา */
+  const [mode, setMode] = useStoredState("providers.mode.v2", "latest");
+  const [outcome, setOutcome] = useState("all");
   const [sort, setSort] = useState<SortState>({
     key: "urgency",
     direction: "desc",
@@ -135,13 +158,17 @@ export function ProvidersView() {
     pageSize,
   });
 
-  const activeCount = useMemo(
-    () =>
-      [debouncedQ !== "", zone !== "all", system !== "all", type !== "all", status !== "all"].filter(
-        Boolean,
-      ).length,
-    [debouncedQ, zone, system, type, status],
-  );
+  /** นับเฉพาะตัวกรองที่มุมมองนั้นใช้จริง ไม่งั้นปุ่มล้างจะขึ้นเลขของตัวกรองที่ซ่อนอยู่ */
+  const activeCount = useMemo(() => {
+    const shared = [debouncedQ !== "", zone !== "all", system !== "all"];
+    const perMode =
+      mode === "latest"
+        ? [outcome !== "all"]
+        : [type !== "all", status !== "all"];
+    return [...shared, ...perMode].filter(Boolean).length;
+  }, [debouncedQ, zone, system, type, status, outcome, mode]);
+
+  const isLatest = mode === "latest";
 
   function resetFilters() {
     setQ("");
@@ -149,6 +176,12 @@ export function ProvidersView() {
     setSystem("all");
     setType("all");
     setStatus("all");
+    setOutcome("all");
+  }
+
+  function changeMode(next: string) {
+    setMode(next);
+    setPage(1);
   }
 
   const rows = data?.rows ?? [];
@@ -215,15 +248,27 @@ export function ProvidersView() {
         title="หน่วยบริการ"
         description="ค้นหาและติดตามสถานะการส่งเคลมรายหน่วยบริการ"
         action={
-          <Button
-            variant="secondary"
-            icon={FileSpreadsheet}
-            onClick={handleExport}
-            loadingText="กำลังสร้างไฟล์"
-            disabled={isPending || rows.length === 0}
-          >
-            ดาวน์โหลด Excel
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Tabs
+              value={mode}
+              options={MODE_OPTIONS}
+              onChange={changeMode}
+              ariaLabel="เลือกมุมมองข้อมูล"
+            />
+            {/* Export ยังรองรับเฉพาะมุมมองรายหน่วยบริการ
+                ถ้าปล่อยให้กดได้ทุกมุมมองจะได้ไฟล์ที่ไม่ตรงกับที่เห็นบนจอ */}
+            {!isLatest && (
+              <Button
+                variant="secondary"
+                icon={FileSpreadsheet}
+                onClick={handleExport}
+                loadingText="กำลังสร้างไฟล์"
+                disabled={isPending || rows.length === 0}
+              >
+                ดาวน์โหลด Excel
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -237,11 +282,28 @@ export function ProvidersView() {
             className="min-w-56 flex-1"
           />
           <SelectFilter label="เขตสุขภาพ" value={zone} options={ZONE_OPTIONS} onChange={changeFilter(setZone)} />
-          <SelectFilter label="ประเภท" value={type} options={TYPE_OPTIONS} onChange={changeFilter(setType)} />
           <SelectFilter label="ระบบต้นทาง" value={system} options={SYSTEM_OPTIONS} onChange={changeFilter(setSystem)} />
-          <SelectFilter label="สถานะ" value={status} options={STATUS_OPTIONS} onChange={changeFilter(setStatus)} />
+          {/* ตัวกรองที่เหลือใช้ได้เฉพาะมุมมองที่มีข้อมูลนั้นจริง ไม่งั้นกรองแล้วไม่มีผล */}
+          {isLatest ? (
+            <SelectFilter label="ผลลัพธ์" value={outcome} options={OUTCOME_OPTIONS} onChange={changeFilter(setOutcome)} />
+          ) : (
+            <>
+              <SelectFilter label="ประเภท" value={type} options={TYPE_OPTIONS} onChange={changeFilter(setType)} />
+              <SelectFilter label="สถานะ" value={status} options={STATUS_OPTIONS} onChange={changeFilter(setStatus)} />
+            </>
+          )}
         </FilterBar>
 
+        {isLatest ? (
+          <LatestRecordsTable
+            schemeId={schemeId}
+            q={debouncedQ}
+            zone={zone}
+            system={system}
+            outcome={outcome}
+          />
+        ) : (
+          <>
         {isError ? (
           <ErrorState
             message={
@@ -317,8 +379,15 @@ export function ProvidersView() {
                     <td className="px-4 py-2.5 text-muted-foreground">
                       <IssueCell schemeId={schemeId} code={row.topIssueCode} />
                     </td>
-                    <td className="px-4 py-2.5 text-muted-foreground">
-                      {formatRelativeTH(row.lastSentAt)}
+                    {/* วันที่เป็นตัวหลักเพราะต้องเอาไปอ้างอิงกับหน่วยบริการได้
+                        ส่วนเวลาที่ผ่านมาช่วยให้กวาดตาหาหน่วยที่เงียบไปนานได้เร็ว */}
+                    <td className="px-4 py-2.5">
+                      <div className="text-sm text-foreground">
+                        {formatDateTimeTH(row.lastSentAt)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatRelativeTH(row.lastSentAt)}
+                      </div>
                     </td>
                   </DataTableRow>
                 ))}
@@ -339,6 +408,9 @@ export function ProvidersView() {
             busy={isFetching}
           />
         )}
+          </>
+        )}
+
       </Card>
     </div>
   );
